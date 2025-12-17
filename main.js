@@ -44,11 +44,17 @@ let state = {
 function initApp() {
     state.user = API.loadUser();
     
-    // UI Reset
-    ['endScreen', 'gameHud', 'nextOverlay', 'startScreen', 'authOverlay', 'introOverlay'].forEach(id => {
+    // UI Reset - WICHTIG: gameHud auch mit display:none verstecken
+    ['endScreen', 'nextOverlay', 'startScreen', 'authOverlay', 'introOverlay'].forEach(id => {
         const el = document.getElementById(id);
-        if(el) el.classList.add(id === 'gameHud' ? 'invisible' : 'hidden');
+        if(el) el.classList.add('hidden');
     });
+    
+    const gameHud = document.getElementById('gameHud');
+    if(gameHud) {
+        gameHud.classList.add('invisible');
+        gameHud.style.display = 'none';
+    }
     
     if (state.user) {
         document.getElementById('startScreen').classList.remove('hidden');
@@ -59,20 +65,80 @@ function initApp() {
         MenuUI.switchMainTab('modes');
     } else {
         document.getElementById('introOverlay').classList.remove('hidden');
+        setupAuthListeners();
     }
+}
+
+// --- AUTH LISTENERS SETUP ---
+function setupAuthListeners() {
+    const btnGuest = document.getElementById('btn-guest');
+    const btnBack = document.getElementById('btn-back');
+    const btnStart = document.getElementById('btn-start');
+    const guestInput = document.getElementById('guest-name');
+    
+    // Entferne alte Listener (falls vorhanden)
+    if(btnGuest) {
+        btnGuest.replaceWith(btnGuest.cloneNode(true));
+        document.getElementById('btn-guest').addEventListener('click', window.chooseGuest);
+    }
+    
+    if(btnBack) {
+        btnBack.replaceWith(btnBack.cloneNode(true));
+        document.getElementById('btn-back').addEventListener('click', window.backToIntro);
+    }
+    
+    if(btnStart) {
+        btnStart.replaceWith(btnStart.cloneNode(true));
+        document.getElementById('btn-start').addEventListener('click', handleAuthSubmit);
+    }
+    
+    if(guestInput) {
+        guestInput.replaceWith(guestInput.cloneNode(true));
+        document.getElementById('guest-name').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAuthSubmit();
+        });
+    }
+}
+
+function handleAuthSubmit() {
+    const input = document.getElementById('guest-name');
+    const name = input.value.trim();
+    
+    if (name === "") {
+        input.style.borderColor = "#ef4444";
+        setTimeout(() => {
+            input.style.borderColor = "#334155";
+        }, 500);
+        return;
+    }
+    
+    // User erstellen
+    state.user = API.createDefaultUser(name);
+    API.saveUser(state.user);
+    
+    // Auth-Screen verstecken und Menü zeigen
+    document.getElementById('authOverlay').classList.add('hidden');
+    initApp();
 }
 
 // --- WINDOW FUNCTIONS ---
 window.chooseLogin = () => alert("Die Account-Server sind in diesem Demo-Build noch nicht verfügbar. Bitte spiele als Gast.");
-window.chooseGuest = () => { document.getElementById('introOverlay').classList.add('hidden'); document.getElementById('authOverlay').classList.remove('hidden'); };
-window.backToIntro = () => { document.getElementById('authOverlay').classList.add('hidden'); document.getElementById('introOverlay').classList.remove('hidden'); };
-window.createAccount = () => {
-    const name = document.getElementById('playerNameInput').value.trim();
-    if (name.length < 1) return;
-    state.user = API.createDefaultUser(name);
-    API.saveUser(state.user);
-    initApp();
+
+window.chooseGuest = () => { 
+    document.getElementById('introOverlay').classList.add('hidden'); 
+    document.getElementById('authOverlay').classList.remove('hidden');
+    // Fokus auf Input
+    setTimeout(() => {
+        const input = document.getElementById('guest-name');
+        if(input) input.focus();
+    }, 100);
 };
+
+window.backToIntro = () => { 
+    document.getElementById('authOverlay').classList.add('hidden'); 
+    document.getElementById('introOverlay').classList.remove('hidden'); 
+};
+
 window.logout = () => { API.deleteUser(); state.user = null; initApp(); };
 window.triggerXPAnim = () => LobbyUI.triggerXPAnim();
 window.devLevelUp = () => { if(state.user.name.toLowerCase() === 'liam') { state.user.xp += 10000; API.saveUser(state.user); initApp(); } };
@@ -83,6 +149,10 @@ window.backToMenu = () => {
     
     // WICHTIG: Kasten-Look entfernen (wieder Edgeless machen)
     canvas.classList.remove('ingame');
+    
+    // HUD verstecken
+    const gameHud = document.getElementById('gameHud');
+    if(gameHud) gameHud.style.display = 'none';
     
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     initApp();
@@ -119,7 +189,14 @@ window.startGame = () => {
 
     state.score = 0; state.round = 1;
     document.getElementById('startScreen').classList.add('hidden');
-    document.getElementById('gameHud').classList.remove('invisible');
+    
+    // HUD anzeigen
+    const gameHud = document.getElementById('gameHud');
+    if(gameHud) {
+        gameHud.style.display = 'block';
+        gameHud.classList.remove('invisible');
+    }
+    
     document.getElementById('timerContainer').style.opacity = (state.currentSettings.timer !== 'off') ? '1' : '0';
     updateHUD();
     startRound();
@@ -233,7 +310,11 @@ function handleRoundEnd(dist, tx = 0, ty = 0) {
 
 function endGame() {
     state.isRunning = false;
-    document.getElementById('gameHud').classList.add('invisible');
+    const gameHud = document.getElementById('gameHud');
+    if(gameHud) {
+        gameHud.classList.add('invisible');
+        gameHud.style.display = 'none';
+    }
     document.getElementById('nextOverlay').classList.add('hidden');
     let earnedXp = state.score; let towerSuccess = false;
     if (state.mode === 'tower') {
