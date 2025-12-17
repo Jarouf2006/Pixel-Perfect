@@ -22,6 +22,7 @@
     width: 280px;
     margin-bottom: 25px;
     outline: none;
+    display: block;
 }
 
 .input-name:focus {
@@ -29,28 +30,89 @@
 }
 
 /* =========================================
-   ✅ BUTTON FIX – NUR SCREEN 2
+   BUTTON ROW
    ========================================= */
-#guest-view .button-row {
+.button-row {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 12px;
-
-    /* WICHTIG */
     width: 100%;
     margin-top: 10px;
 }
 
-/* überschreibt NUR das problematische auto-margin */
-#guest-view .button-row .btn {
-    margin: 0;
+.button-row .btn {
     width: 140px;
-
-    /* Sichtbarkeit erzwingen */
+    margin: 0;
     display: block;
     opacity: 1;
     visibility: visible;
-    position: relative;
-    z-index: 5;
+}
+
+/* =========================================
+   OVERLAY LAYOUT – ALLE AUTH SCREENS
+   ========================================= */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    background-color: rgba(15, 23, 42, 0.95);
+    z-index: 50;
+}
+
+/* =========================================
+   SPEZIELL: ZWEITER AUTH SCREEN (#authOverlay)
+   ========================================= */
+#authOverlay {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 60;
+}
+
+#authOverlay .instruction-text,
+#authOverlay .input-name,
+#authOverlay .button-row {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+#authOverlay .input-name {
+    margin-bottom: 20px;
+    width: 280px;
+    text-align: center;
+}
+
+#authOverlay .button-row {
+    display: flex !important;
+    justify-content: center;
+    gap: 15px;
+}
+
+#authOverlay .button-row .btn {
+    width: 140px !important;
+    margin: 0 !important;
+}
+
+/* =========================================
+   OPTIONAL: BUTTON HOVER FÜR ZWEITEN SCREEN
+   ========================================= */
+#authOverlay .button-row .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
 }

@@ -37,13 +37,13 @@ body {
     justify-content: center;
 }
 
-/* ❗ FIX: Wrapper darf NICHT alles zentrieren */
+/* Wrapper darf NICHT alles zentrieren */
 .view-wrapper {
     width: 100%;
     display: block;
 }
 
-/* ❗ FIX: Content Areas normaler Layout-Flow */
+/* Content Areas normaler Layout-Flow */
 .content-area {
     width: 100%;
     display: block;
@@ -65,7 +65,7 @@ body {
 }
 
 /* =========================================
-   BUTTONS (GLOBAL – NICHT anfassen)
+   BUTTONS (GLOBAL)
    ========================================= */
 .btn {
     background: linear-gradient(135deg, #3b82f6, #2563eb);
