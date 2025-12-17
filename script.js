@@ -1,22 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
     
     const menuView = document.getElementById('menu-view');
-    const guestView = document.getElementById('guest-view');
+    const authOverlay = document.getElementById('authOverlay');
     
     const btnGuest = document.getElementById('btn-guest');
     const btnBack = document.getElementById('btn-back');
     const btnStart = document.getElementById('btn-start');
     const guestInput = document.getElementById('guest-name');
 
-    function toggleView(showGuest) {
-        if (showGuest) {
-            menuView.classList.add('hidden');
-            guestView.classList.remove('hidden');
+    function toggleView(showAuth) {
+        if (showAuth) {
+            authOverlay.classList.remove('hidden');
             // Fokus für schnelle Eingabe
             setTimeout(() => guestInput.focus(), 100);
         } else {
-            guestView.classList.add('hidden');
-            menuView.classList.remove('hidden');
+            authOverlay.classList.add('hidden');
         }
     }
 
@@ -39,13 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function startGame() {
-        const name = guestInput.value;
+        const name = guestInput.value.trim();
         
-        if (name.trim() === "") {
-            // Rahmen rot färben (Original Error Style Logic)
+        if (name === "") {
+            // Rahmen rot färben
             guestInput.style.borderColor = "#ef4444";
             setTimeout(() => {
-                guestInput.style.borderColor = "#334155"; // Zurück zur Original Farbe
+                guestInput.style.borderColor = "#334155";
             }, 500);
             return;
         }

@@ -20,7 +20,7 @@
     font-size: 18px;
     text-align: center;
     width: 280px;
-    margin-bottom: 25px;
+    margin: 0 auto 20px auto;
     outline: none;
     display: block;
 }
@@ -37,82 +37,59 @@
     justify-content: center;
     align-items: center;
     gap: 12px;
-    width: 100%;
-    margin-top: 10px;
+    width: 280px;
+    margin: 0 auto;
 }
 
 .button-row .btn {
-    width: 140px;
+    flex: 1;
     margin: 0;
-    display: block;
-    opacity: 1;
-    visibility: visible;
 }
 
 /* =========================================
-   OVERLAY LAYOUT – ALLE AUTH SCREENS
+   AUTH SCREEN OVERLAY
    ========================================= */
-.overlay {
-    position: absolute;
+.auth-screen {
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    background-color: #0f172a;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-screen.hidden {
+    display: none;
+}
+
+/* =========================================
+   AUTH CONTAINER (ZENTRIERTER INHALT)
+   ========================================= */
+.auth-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    gap: 20px;
-    background-color: rgba(15, 23, 42, 0.95);
-    z-index: 50;
+    gap: 0;
+    max-width: 500px;
+    padding: 40px;
+}
+
+.auth-container .main-title {
+    margin-bottom: 30px;
+}
+
+.auth-container .instruction-text {
+    margin-bottom: 30px;
 }
 
 /* =========================================
-   SPEZIELL: ZWEITER AUTH SCREEN (#authOverlay)
+   BUTTON HOVER FÜR AUTH SCREEN
    ========================================= */
-#authOverlay {
-    display: flex !important;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 60;
-}
-
-#authOverlay .instruction-text,
-#authOverlay .input-name,
-#authOverlay .button-row {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-#authOverlay .input-name {
-    margin-bottom: 20px;
-    width: 280px;
-    text-align: center;
-}
-
-#authOverlay .button-row {
-    display: flex !important;
-    justify-content: center;
-    gap: 15px;
-}
-
-#authOverlay .button-row .btn {
-    width: 140px !important;
-    margin: 0 !important;
-}
-
-/* =========================================
-   OPTIONAL: BUTTON HOVER FÜR ZWEITEN SCREEN
-   ========================================= */
-#authOverlay .button-row .btn:hover {
+.auth-screen .button-row .btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
 }
