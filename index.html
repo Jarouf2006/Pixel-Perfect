@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixel Perfect</title>
-    <!-- Dashboard / allgemeines Styling -->
     <link rel="stylesheet" href="style.css">
-    <!-- Auth Screens (Login / Name eingeben) -->
     <link rel="stylesheet" href="auth.css">
 </head>
 <body>
@@ -69,43 +67,45 @@
         <h1 class="main-title" id="mainTitle">Pixel Perfect</h1>
 
         <!-- ARC PROFILE (oben rechts) -->
-        <div class="arc-profile-container" style="position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 10px;">
+        <div class="arc-profile-container">
             <svg width="60" height="60">
                 <circle cx="30" cy="30" r="24" fill="none" stroke="#1e293b" stroke-width="4"/>
                 <circle id="arcProgress" cx="30" cy="30" r="24" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" transform="rotate(-90 30 30)"/>
             </svg>
-            <div class="arc-text" style="display: flex; flex-direction: column;">
-                <div id="arcName" style="font-weight: bold; color: #e2e8f0;">Player</div>
-                <div id="arcLevel" style="font-size: 12px; color: #64748b;">Lv 1</div>
+            <div class="arc-text">
+                <div id="arcName">Player</div>
+                <div id="arcLevel">Lv 1</div>
             </div>
-            <div id="xpTooltip" class="xp-tooltip" style="position: absolute; top: 70px; right: 0; background: rgba(15, 23, 42, 0.95); padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s;">Noch 1000 XP bis Level 2</div>
+            <div id="xpTooltip" class="xp-tooltip">Noch 1000 XP bis Level 2</div>
         </div>
 
         <div class="view-wrapper">
             
             <!-- NAVIGATION TABS -->
-            <div class="tab-nav" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-                <button id="navModi" class="tab-btn active" onclick="switchMainTab('modes')" style="padding: 10px 30px; background: #3b82f6; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold;">Modi</button>
-                <button id="navTower" class="tab-btn" onclick="switchMainTab('tower')" style="padding: 10px 30px; background: #1e293b; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold;">🗼 Tower</button>
+            <div class="tab-nav">
+                <button id="navModi" class="tab-btn active" onclick="switchMainTab('modes')">Modi</button>
+                <button id="navTower" class="tab-btn" onclick="switchMainTab('tower')">🗼 Tower</button>
             </div>
 
             <!-- MODES VIEW -->
             <div id="viewModes" class="content-area">
-                <div id="modesGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;"></div>
+                <div id="modesGrid"></div>
                 
-                <div id="descArea" style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 8px; margin-bottom: 15px; min-height: 100px;"></div>
+                <div class="right-panel">
+                    <div id="descArea"></div>
+                    <div id="settingsArea"></div>
+                </div>
                 
-                <div id="settingsArea" style="margin-bottom: 20px;"></div>
-                
-                <button id="startBtn" class="btn" onclick="startGame()">Spiel Starten</button>
+                <div class="buttons-panel">
+                    <button id="startBtn" class="btn" onclick="startGame()">Spiel Starten</button>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
             </div>
 
             <!-- TOWER VIEW -->
-            <div id="viewTower" class="content-area hidden" style="position: relative; min-height: 400px;"></div>
+            <div id="viewTower" class="content-area hidden"></div>
 
         </div>
-        
-        <button class="btn btn-secondary" onclick="logout()" style="margin-top: 20px; width: 200px;">Logout</button>
     </div>
 
     <!-- WICHTIG: Nur main.js als ES6 Module laden -->

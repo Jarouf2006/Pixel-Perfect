@@ -182,7 +182,11 @@ window.startGame = () => {
     }
     if(!state.currentSettings.rotation) state.currentSettings.rotation = 'off';
     
-    canvas.className = (state.currentSettings.style === 'spotlight' || state.currentSettings.cursor === 'magnet' || state.currentSettings.cursor === 'mirror') ? 'hide-cursor' : '';
+    // WICHTIG: Cursor-Logik - Standard ist crosshair, außer bei speziellen Modi
+    canvas.classList.remove('hide-cursor');
+    if (state.currentSettings.style === 'spotlight' || state.currentSettings.cursor === 'magnet' || state.currentSettings.cursor === 'mirror') {
+        canvas.classList.add('hide-cursor');
+    }
     
     // WICHTIG: Jetzt den Kasten-Look aktivieren (Hintergrund dunkel machen)
     canvas.classList.add('ingame');
