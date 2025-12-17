@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Perfect</title>
+    <!-- Dashboard / allgemeines Styling -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Auth Screens (Login / Name eingeben) -->
+    <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+
+    <!-- AUTH OVERLAY -->
+    <div id="authOverlay" class="auth-screen hidden">
+        <div class="auth-container">
+            <h1 class="main-title">Pixel Perfect</h1>
+            <p class="instruction-text">Wie sollen wir dich nennen?</p>
+            <input type="text" id="guest-name" class="input-name" placeholder="Dein Spielername" maxlength="12" autocomplete="off">
+
+            <div class="button-row">
+                <button id="btn-back" class="btn btn-secondary">Zurück</button>
+                <button id="btn-start" class="btn">Start</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD / START SCREEN -->
+    <div id="startScreen" class="main-container">
+        <h1 class="main-title">Pixel Perfect</h1>
+
+        <div class="view-wrapper">
+            
+            <div id="menu-view" class="content-area">
+                <button id="btn-guest" class="btn">Gast</button>
+                <button id="btn-login" class="btn">Login</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

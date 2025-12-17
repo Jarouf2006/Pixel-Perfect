@@ -1,0 +1,56 @@
+/* =========================================
+   AUTH TEXT
+   ========================================= */
+.instruction-text {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #cbd5f5;
+    text-align: center;
+}
+
+/* =========================================
+   INPUT
+   ========================================= */
+.input-name {
+    background: #1e293b;
+    border: 2px solid #334155;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 18px;
+    text-align: center;
+    width: 280px;
+    margin-bottom: 25px;
+    outline: none;
+}
+
+.input-name:focus {
+    border-color: #3b82f6;
+}
+
+/* =========================================
+   ✅ BUTTON FIX – NUR SCREEN 2
+   ========================================= */
+#guest-view .button-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+
+    /* WICHTIG */
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* überschreibt NUR das problematische auto-margin */
+#guest-view .button-row .btn {
+    margin: 0;
+    width: 140px;
+
+    /* Sichtbarkeit erzwingen */
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    position: relative;
+    z-index: 5;
+}
