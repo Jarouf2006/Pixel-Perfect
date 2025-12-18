@@ -86,6 +86,11 @@
     margin-bottom: 30px;
 }
 
+/* Buttons im INTRO haben Abstand */
+.auth-container .btn {
+    margin: 10px 0;
+}
+
 /* =========================================
    BUTTON HOVER FÜR AUTH SCREEN
    ========================================= */

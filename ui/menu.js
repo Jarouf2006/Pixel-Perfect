@@ -35,34 +35,118 @@ export function updateSettingsUI(mode, blitzExtreme) {
     const settingsArea = document.getElementById('settingsArea');
     const descArea = document.getElementById('descArea');
     const title = document.getElementById('mainTitle');
-    const btn = document.getElementById('startBtn');
 
     if (settingsArea) settingsArea.classList.remove('hidden');
     
     const modeData = MODES.find(m => m.id === mode);
     if (descArea && modeData) {
-        // Name in Bold + Description
-        descArea.innerHTML = `<strong style="font-size:18px; color:#fff; display:block; margin-bottom:10px;">${modeData.name.toUpperCase()}</strong>${modeData.desc}`;
+        descArea.innerHTML = `<strong>${modeData.name.toUpperCase()}</strong>${modeData.desc}`;
     }
 
     if (settingsArea) {
+        // FIX: Entferne distribute-Klasse erstmal
+        settingsArea.classList.remove('distribute');
+        
         if (mode === 'normal') {
             settingsArea.innerHTML = `
-                <div class="setting-group"><label>Größe</label><select id="sizeSelect" class="edgeless-select"><option value="large">Groß (Einfach)</option><option value="medium" selected>Mittel</option><option value="small">Klein (Schwer)</option></select></div>
-                <div class="setting-group" style="margin-top:10px;"><label>Abstraktion</label><select id="compSelect" class="edgeless-select"><option value="simple">Simpel</option><option value="medium" selected>Normal</option><option value="chaos">Chaos</option></select></div>`;
-        } else if (mode === 'blitz') {
-            settingsArea.innerHTML = `<div class="switch-container" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;"><span class="switch-label" style="font-weight:bold; color:#ef4444;">🔥 BLITZ EXTREME</span><input type="checkbox" id="extremeToggle" ${blitzExtreme ? 'checked' : ''}></div>`;
-        } else if (mode === 'custom') {
-            // Compact 2-column layout for custom settings since space is limited vertically
-            settingsArea.innerHTML = `
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div class="setting-group"><label>Größe</label><select id="c_size" class="edgeless-select"><option value="medium">Mittel</option><option value="small">Klein</option><option value="large">Groß</option></select></div>
-                    <div class="setting-group"><label>Rotation</label><select id="c_rot" class="edgeless-select"><option value="off">Aus</option><option value="slow">Langsam</option><option value="fast">Schnell</option></select></div>
-                    <div class="setting-group"><label>Zeit</label><select id="c_time" class="edgeless-select"><option value="off">Keins</option><option value="3000">3 Sek</option></select></div>
-                    <div class="setting-group"><label>Sicht</label><select id="c_vis" class="edgeless-select"><option value="normal">Normal</option><option value="blitz">Blitz</option></select></div>
+                <div class="setting-group">
+                    <select id="sizeSelect" class="edgeless-select" data-label="Größe">
+                        <option value="large">Groß</option>
+                        <option value="medium" selected>Mittel</option>
+                        <option value="small">Klein</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="compSelect" class="edgeless-select" data-label="Abstraktion">
+                        <option value="simple">Simpel</option>
+                        <option value="medium" selected>Normal</option>
+                        <option value="chaos">Chaos</option>
+                    </select>
                 </div>`;
+            // FIX: Wenige Settings -> verteilen
+            settingsArea.classList.add('distribute');
+            initSelectLabels(settingsArea);
+            
+        } else if (mode === 'blitz') {
+            settingsArea.innerHTML = `
+                <div class="switch-container">
+                    <span class="switch-label">🔥 BLITZ EXTREME</span>
+                    <input type="checkbox" id="extremeToggle" ${blitzExtreme ? 'checked' : ''}>
+                </div>`;
+            // FIX: Nur eine Setting -> verteilen (zentriert)
+            settingsArea.classList.add('distribute');
+            
+        } else if (mode === 'custom') {
+            // FIX: Viele Settings -> NICHT verteilen, scrollbar aktiv
+            settingsArea.innerHTML = `
+                <div class="setting-group">
+                    <select id="c_size" class="edgeless-select" data-label="Größe">
+                        <option value="medium" selected>Mittel</option>
+                        <option value="small">Klein</option>
+                        <option value="large">Groß</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="c_comp" class="edgeless-select" data-label="Komplexität">
+                        <option value="medium" selected>Normal</option>
+                        <option value="simple">Simpel</option>
+                        <option value="chaos">Chaos</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="c_rot" class="edgeless-select" data-label="Rotation">
+                        <option value="off" selected>Aus</option>
+                        <option value="slow">Langsam</option>
+                        <option value="fast">Schnell</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="c_time" class="edgeless-select" data-label="Zeitlimit">
+                        <option value="off" selected>Keins</option>
+                        <option value="3000">3 Sek</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="c_vis" class="edgeless-select" data-label="Sichtbarkeit">
+                        <option value="normal" selected>Normal</option>
+                        <option value="blitz">Blitz</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="c_move" class="edgeless-select" data-label="Bewegung">
+                        <option value="off" selected>Aus</option>
+                        <option value="hunter">Hunter</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="c_spec" class="edgeless-select" data-label="Special">
+                        <option value="off" selected>Aus</option>
+                        <option value="pulsar">Pulsar</option>
+                        <option value="glitch">Glitch</option>
+                        <option value="mirage">Mirage</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="c_style" class="edgeless-select" data-label="Style">
+                        <option value="normal" selected>Normal</option>
+                        <option value="blueprint">Blueprint</option>
+                        <option value="spotlight">Spotlight</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="c_cursor" class="edgeless-select" data-label="Cursor">
+                        <option value="normal" selected>Normal</option>
+                        <option value="magnet">Magnet</option>
+                        <option value="mirror">Mirror</option>
+                    </select>
+                </div>`;
+            // Keine distribute-Klasse für Custom -> scrollt stattdessen
+            initSelectLabels(settingsArea);
+            
         } else {
-            settingsArea.innerHTML = ``; 
+            // Andere Modi ohne Settings -> leere Box, zentriert
+            settingsArea.innerHTML = `<div style="color: #64748b; text-align: center; font-size: 14px;">Keine Einstellungen für diesen Modus</div>`;
+            settingsArea.classList.add('distribute');
         }
     }
     
@@ -132,4 +216,44 @@ export function switchMainTab(tab) {
     if(navTower) navTower.classList.toggle('active', tab === 'tower');
     if(viewModes) viewModes.classList.toggle('hidden', tab !== 'modes');
     if(viewTower) viewTower.classList.toggle('hidden', tab !== 'tower');
+}
+
+// Hilfsfunktion: Wandelt Selects um, sodass im geschlossenen Zustand "Label Wert" steht
+function initSelectLabels(container) {
+    const selects = container.querySelectorAll('select[data-label]');
+    
+    selects.forEach(select => {
+        const label = select.dataset.label;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'select-wrapper';
+        
+        // Erstelle Display-Element für den geschlossenen Zustand
+        const display = document.createElement('div');
+        display.className = 'select-display';
+        
+        // Funktion um Display zu aktualisieren
+        const updateDisplay = () => {
+            const selectedOption = select.options[select.selectedIndex];
+            display.textContent = `${label} ${selectedOption.text}`;
+        };
+        
+        // Initial setzen
+        updateDisplay();
+        
+        // Bei Änderung aktualisieren
+        select.addEventListener('change', updateDisplay);
+        
+        // Wrapper einfügen
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.appendChild(display);
+        wrapper.appendChild(select);
+        
+        // Click auf Display öffnet Select
+        display.addEventListener('click', () => {
+            select.focus();
+            // Simuliere Click um Dropdown zu öffnen
+            const event = new MouseEvent('mousedown', { bubbles: true });
+            select.dispatchEvent(event);
+        });
+    });
 }
