@@ -151,20 +151,70 @@ export function updateSettingsUI(mode, blitzExtreme) {
     }
     
     if (title) {
+        // Reset styles
         title.style.background = ""; 
         title.style.webkitTextFillColor = ""; 
+        title.style.filter = "";
         
         let grad = "";
-        if (mode === 'hunter') grad = "linear-gradient(to right, #06b6d4, #22d3ee)";
-        else if (mode === 'turnier') grad = "linear-gradient(to right, #ef4444, #f59e0b)";
-        else if (mode === 'blitz') grad = "linear-gradient(to right, #f59e0b, #fbbf24)";
-        else if (mode === 'pulsar') grad = "linear-gradient(to right, #d946ef, #e879f9)";
-        else if (mode === 'glitch') grad = "linear-gradient(to right, #a855f7, #c084fc)";
+        let glowColor = "rgba(52, 211, 153, 0.6)"; // Default grün
         
-        if(grad) {
+        // Seamless loop gradients - Pattern wiederholt sich für nahtlose Animation
+        if (mode === 'normal') {
+            grad = "linear-gradient(90deg, #60a5fa, #34d399, #9fe8c9, #34d399, #60a5fa, #34d399, #9fe8c9, #34d399, #60a5fa)";
+            glowColor = "rgba(52, 211, 153, 0.6)";
+        }
+        else if (mode === 'turnier') {
+            grad = "linear-gradient(90deg, #ef4444, #f59e0b, #fcd34d, #f59e0b, #ef4444, #f59e0b, #fcd34d, #f59e0b, #ef4444)";
+            glowColor = "rgba(239, 68, 68, 0.6)";
+        }
+        else if (mode === 'blitz') {
+            grad = "linear-gradient(90deg, #f59e0b, #fbbf24, #fef08a, #fbbf24, #f59e0b, #fbbf24, #fef08a, #fbbf24, #f59e0b)";
+            glowColor = "rgba(245, 158, 11, 0.6)";
+        }
+        else if (mode === 'hunter') {
+            grad = "linear-gradient(90deg, #06b6d4, #22d3ee, #a5f3fc, #22d3ee, #06b6d4, #22d3ee, #a5f3fc, #22d3ee, #06b6d4)";
+            glowColor = "rgba(6, 182, 212, 0.6)";
+        }
+        else if (mode === 'pulsar') {
+            grad = "linear-gradient(90deg, #d946ef, #e879f9, #f5d0fe, #e879f9, #d946ef, #e879f9, #f5d0fe, #e879f9, #d946ef)";
+            glowColor = "rgba(217, 70, 239, 0.6)";
+        }
+        else if (mode === 'blueprint') {
+            grad = "linear-gradient(90deg, #3b82f6, #60a5fa, #bfdbfe, #60a5fa, #3b82f6, #60a5fa, #bfdbfe, #60a5fa, #3b82f6)";
+            glowColor = "rgba(59, 130, 246, 0.6)";
+        }
+        else if (mode === 'spotlight') {
+            grad = "linear-gradient(90deg, #64748b, #94a3b8, #e2e8f0, #94a3b8, #64748b, #94a3b8, #e2e8f0, #94a3b8, #64748b)";
+            glowColor = "rgba(100, 116, 139, 0.6)";
+        }
+        else if (mode === 'magnet') {
+            grad = "linear-gradient(90deg, #f97316, #fb923c, #fed7aa, #fb923c, #f97316, #fb923c, #fed7aa, #fb923c, #f97316)";
+            glowColor = "rgba(249, 115, 22, 0.6)";
+        }
+        else if (mode === 'glitch') {
+            grad = "linear-gradient(90deg, #a855f7, #c084fc, #e9d5ff, #c084fc, #a855f7, #c084fc, #e9d5ff, #c084fc, #a855f7)";
+            glowColor = "rgba(168, 85, 247, 0.6)";
+        }
+        else if (mode === 'mirage') {
+            grad = "linear-gradient(90deg, #14b8a6, #2dd4bf, #99f6e4, #2dd4bf, #14b8a6, #2dd4bf, #99f6e4, #2dd4bf, #14b8a6)";
+            glowColor = "rgba(20, 184, 166, 0.6)";
+        }
+        else if (mode === 'mirror') {
+            grad = "linear-gradient(90deg, #94a3b8, #cbd5e1, #f8fafc, #cbd5e1, #94a3b8, #cbd5e1, #f8fafc, #cbd5e1, #94a3b8)";
+            glowColor = "rgba(148, 163, 184, 0.6)";
+        }
+        else if (mode === 'custom') {
+            grad = "linear-gradient(90deg, #8b5cf6, #a78bfa, #ddd6fe, #a78bfa, #8b5cf6, #a78bfa, #ddd6fe, #a78bfa, #8b5cf6)";
+            glowColor = "rgba(139, 92, 246, 0.6)";
+        }
+        
+        if (grad) {
             title.style.background = grad;
+            title.style.backgroundSize = "200% 100%";
             title.style.webkitBackgroundClip = "text"; 
-            title.style.webkitTextFillColor = "transparent"; 
+            title.style.webkitTextFillColor = "transparent";
+            title.style.setProperty('--glow-color', glowColor);
         }
     }
 }

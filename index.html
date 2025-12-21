@@ -66,17 +66,17 @@
     <div id="startScreen" class="main-container hidden">
         <h1 class="main-title" id="mainTitle">Pixel Perfect</h1>
 
-        <!-- ARC PROFILE (oben rechts) -->
-        <div class="arc-profile-container">
-            <svg width="60" height="60">
-                <circle cx="30" cy="30" r="24" fill="none" stroke="#1e293b" stroke-width="4"/>
-                <circle id="arcProgress" cx="30" cy="30" r="24" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" transform="rotate(-90 30 30)"/>
-            </svg>
-            <div class="arc-text">
-                <div id="arcName">Player</div>
-                <div id="arcLevel">Lv 1</div>
+        <!-- ARC PROFILE (oben rechts) - Arc Raiders Style -->
+        <div class="arc-profile-container" onclick="triggerXPAnim()" ondblclick="devLevelUp()">
+            <div class="arc-circle-wrapper">
+                <svg class="progress-ring" width="60" height="60">
+                    <circle class="progress-ring__circle-bg" cx="30" cy="30" r="28"></circle>
+                    <circle class="progress-ring__circle" id="arcProgress" cx="30" cy="30" r="28"></circle>
+                </svg>
+                <div class="arc-level-text" id="arcLevel">1</div>
             </div>
-            <div id="xpTooltip" class="xp-tooltip">Noch 1000 XP bis Level 2</div>
+            <div class="arc-name" id="arcName">GAST</div>
+            <div class="xp-tooltip" id="xpTooltip">- XP bis Level 2</div>
         </div>
 
         <div class="view-wrapper">

@@ -11,7 +11,7 @@ import * as API from './net/api.js';
 
 // --- KONSTANTEN & CONFIG ---
 const LEVELS = { turnier: 3, blitz: 5, hunter: 7, pulsar: 10, blueprint: 12, spotlight: 15, magnet: 18, glitch: 20, mirage: 22, mirror: 25, custom: 1 };
-const XP_PER_LEVEL = 1000; 
+const XP_PER_LEVEL = 5000; 
 
 const MODE_PRESETS = {
     normal: { size: 'medium', complexity: 'medium', rotation: 'off', timer: 'off', visibility: 'normal' },
@@ -141,7 +141,14 @@ window.backToIntro = () => {
 
 window.logout = () => { API.deleteUser(); state.user = null; initApp(); };
 window.triggerXPAnim = () => LobbyUI.triggerXPAnim();
-window.devLevelUp = () => { if(state.user.name.toLowerCase() === 'liam') { state.user.xp += 10000; API.saveUser(state.user); initApp(); } };
+window.devLevelUp = () => { 
+    if(state.user.name.toLowerCase() === 'liam') { 
+        state.user.xp += 50000; // 10 Levels bei 5000 XP pro Level
+        state.user.level = 1 + Math.floor(state.user.xp / XP_PER_LEVEL);
+        API.saveUser(state.user); 
+        initApp(); 
+    } 
+};
 
 window.backToMenu = () => {
     state.isRunning = false; state.vertices = []; state.result = null; state.input.clicked = false;
@@ -211,6 +218,13 @@ window.startGame = () => {
 function setMode(modeId) {
     state.mode = modeId;
     if (modeId !== 'tower') state.lastMode = modeId;
+    
+    // FIX: Update active class auf Mode-Cards
+    document.querySelectorAll('.mode-card').forEach(card => {
+        const cardModeId = card.id.replace('card_', '');
+        card.classList.toggle('active', cardModeId === modeId);
+    });
+    
     MenuUI.updateSettingsUI(modeId, state.blitzExtreme);
     const toggle = document.getElementById('extremeToggle');
     if(toggle) toggle.onchange = () => { state.blitzExtreme = toggle.checked; setMode('blitz'); };
