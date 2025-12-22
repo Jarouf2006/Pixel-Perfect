@@ -154,64 +154,62 @@ export function updateSettingsUI(mode, blitzExtreme) {
         // Reset styles
         title.style.background = ""; 
         title.style.webkitTextFillColor = ""; 
-        title.style.filter = "";
         
         let grad = "";
         let glowColor = "rgba(52, 211, 153, 0.6)"; // Default grün
         
-        // Seamless loop gradients - Pattern wiederholt sich für nahtlose Animation
+        // Statische Gradients - weißer Shimmer kommt vom CSS ::after
         if (mode === 'normal') {
-            grad = "linear-gradient(90deg, #60a5fa, #34d399, #9fe8c9, #34d399, #60a5fa, #34d399, #9fe8c9, #34d399, #60a5fa)";
+            grad = "linear-gradient(to right, #60a5fa, #34d399)";
             glowColor = "rgba(52, 211, 153, 0.6)";
         }
         else if (mode === 'turnier') {
-            grad = "linear-gradient(90deg, #ef4444, #f59e0b, #fcd34d, #f59e0b, #ef4444, #f59e0b, #fcd34d, #f59e0b, #ef4444)";
+            grad = "linear-gradient(to right, #ef4444, #f59e0b)";
             glowColor = "rgba(239, 68, 68, 0.6)";
         }
         else if (mode === 'blitz') {
-            grad = "linear-gradient(90deg, #f59e0b, #fbbf24, #fef08a, #fbbf24, #f59e0b, #fbbf24, #fef08a, #fbbf24, #f59e0b)";
+            grad = "linear-gradient(to right, #f59e0b, #fbbf24)";
             glowColor = "rgba(245, 158, 11, 0.6)";
         }
         else if (mode === 'hunter') {
-            grad = "linear-gradient(90deg, #06b6d4, #22d3ee, #a5f3fc, #22d3ee, #06b6d4, #22d3ee, #a5f3fc, #22d3ee, #06b6d4)";
+            grad = "linear-gradient(to right, #06b6d4, #22d3ee)";
             glowColor = "rgba(6, 182, 212, 0.6)";
         }
         else if (mode === 'pulsar') {
-            grad = "linear-gradient(90deg, #d946ef, #e879f9, #f5d0fe, #e879f9, #d946ef, #e879f9, #f5d0fe, #e879f9, #d946ef)";
+            grad = "linear-gradient(to right, #d946ef, #e879f9)";
             glowColor = "rgba(217, 70, 239, 0.6)";
         }
         else if (mode === 'blueprint') {
-            grad = "linear-gradient(90deg, #3b82f6, #60a5fa, #bfdbfe, #60a5fa, #3b82f6, #60a5fa, #bfdbfe, #60a5fa, #3b82f6)";
+            grad = "linear-gradient(to right, #3b82f6, #60a5fa)";
             glowColor = "rgba(59, 130, 246, 0.6)";
         }
         else if (mode === 'spotlight') {
-            grad = "linear-gradient(90deg, #64748b, #94a3b8, #e2e8f0, #94a3b8, #64748b, #94a3b8, #e2e8f0, #94a3b8, #64748b)";
+            grad = "linear-gradient(to right, #64748b, #94a3b8)";
             glowColor = "rgba(100, 116, 139, 0.6)";
         }
         else if (mode === 'magnet') {
-            grad = "linear-gradient(90deg, #f97316, #fb923c, #fed7aa, #fb923c, #f97316, #fb923c, #fed7aa, #fb923c, #f97316)";
+            grad = "linear-gradient(to right, #f97316, #fb923c)";
             glowColor = "rgba(249, 115, 22, 0.6)";
         }
         else if (mode === 'glitch') {
-            grad = "linear-gradient(90deg, #a855f7, #c084fc, #e9d5ff, #c084fc, #a855f7, #c084fc, #e9d5ff, #c084fc, #a855f7)";
+            grad = "linear-gradient(to right, #a855f7, #c084fc)";
             glowColor = "rgba(168, 85, 247, 0.6)";
         }
         else if (mode === 'mirage') {
-            grad = "linear-gradient(90deg, #14b8a6, #2dd4bf, #99f6e4, #2dd4bf, #14b8a6, #2dd4bf, #99f6e4, #2dd4bf, #14b8a6)";
+            grad = "linear-gradient(to right, #14b8a6, #2dd4bf)";
             glowColor = "rgba(20, 184, 166, 0.6)";
         }
         else if (mode === 'mirror') {
-            grad = "linear-gradient(90deg, #94a3b8, #cbd5e1, #f8fafc, #cbd5e1, #94a3b8, #cbd5e1, #f8fafc, #cbd5e1, #94a3b8)";
+            grad = "linear-gradient(to right, #94a3b8, #cbd5e1)";
             glowColor = "rgba(148, 163, 184, 0.6)";
         }
         else if (mode === 'custom') {
-            grad = "linear-gradient(90deg, #8b5cf6, #a78bfa, #ddd6fe, #a78bfa, #8b5cf6, #a78bfa, #ddd6fe, #a78bfa, #8b5cf6)";
+            grad = "linear-gradient(to right, #8b5cf6, #a78bfa)";
             glowColor = "rgba(139, 92, 246, 0.6)";
         }
         
         if (grad) {
             title.style.background = grad;
-            title.style.backgroundSize = "200% 100%";
             title.style.webkitBackgroundClip = "text"; 
             title.style.webkitTextFillColor = "transparent";
             title.style.setProperty('--glow-color', glowColor);
@@ -219,41 +217,148 @@ export function updateSettingsUI(mode, blitzExtreme) {
     }
 }
 
-export function updateTowerUI(floor, maxFloor, config, themeColor, onStart) {
+export function updateTowerUI(floor, maxFloor, config, themeColor, onStart, userName, towerAscended) {
     const view = document.getElementById('viewTower');
     if(!view) return;
 
-    const bgGlow = `radial-gradient(circle at center, ${themeColor}20 0%, transparent 70%)`;
+    const bgCol = themeColor + '20';
+    const borderCol = themeColor + '60';
     
+    let bgStyle = `background: ${bgCol};`;
+    let animClass = "";
+    let contentClass = "";
+    let cardAnimClass = "";
+    
+    // Animation wenn aufgestiegen
+    if (towerAscended) {
+        const prevColor = floor > 1 ? getTowerColor(floor - 1) : themeColor;
+        const gradStart = `${themeColor}30`;
+        const gradEnd = `${prevColor}30`;
+        bgStyle = `background: linear-gradient(to bottom, ${gradStart} 0%, ${gradStart} 40%, ${gradEnd} 60%, ${gradEnd} 100%); background-size: 100% 250%; background-position: 0% 100%;`;
+        animClass = "tower-animating-bg";
+        contentClass = "tower-content-fade";
+        cardAnimClass = "tower-card-anim";
+    }
+    
+    // Dev Button nur für Liam
+    let devBtn = '';
+    if (userName && userName.toLowerCase() === 'liam') {
+        devBtn = `<button class="btn tower-dev-btn" id="devSkipBtn">🚧 DEV: SKIP 10 LEVELS 🚧</button>`;
+    }
+
+    // Rekord Anzeige mit Pokal wenn Level 30 erreicht
+    let recordDisplay = `Rekord: Ebene ${maxFloor || 1}`;
+    if (maxFloor >= 30) recordDisplay += " 🏆";
+
     view.innerHTML = `
-        <div style="position:absolute; inset:0; background: ${bgGlow}; pointer-events:none;"></div>
-        <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; z-index:2;">
-            <div style="font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px ${themeColor});">🗼</div>
-            
-            <h2 style="color: ${themeColor}; text-transform: uppercase; font-size: 32px; margin-bottom: 5px;">Ebene ${floor}</h2>
-            <div style="color: #64748b; font-size: 14px; margin-bottom: 30px; font-weight:bold;">REKORD: ${maxFloor || 1}</div>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; text-align:center;">
-                <div>
-                    <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Ziel</div>
-                    <div style="font-size: 24px; font-weight: bold; color: #fff;">${config.target}</div>
-                </div>
-                <div>
-                    <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Gefahr</div>
-                    <div style="font-size: 24px; font-weight: bold; color: #fff;">${config.movement !== 'off' ? 'HOCH' : 'NORMAL'}</div>
+        <div class="tower-elevator-bg ${animClass}" style="${bgStyle}"></div>
+        <div class="tower-content ${contentClass}">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 60px; margin-bottom: 10px; filter: drop-shadow(0 0 10px ${themeColor});" id="towerLevelIcon">🗼</div>
+                <h2 style="font-size: 32px; color: ${themeColor}; margin-bottom: 5px; text-transform: uppercase; font-style: italic;" id="towerLevelText">Ebene ${floor}</h2>
+                
+                <div style="color: #94a3b8; font-size: 14px; margin-bottom: 2px;">${recordDisplay}</div>
+                <div style="color: #64748b; font-size: 12px; margin-bottom: 15px;">(Max. Ebene 30)</div>
+                <div style="font-size: 12px; color: #fbbf24; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">✨ EXKLUSIVE BELOHNUNGEN ✨</div>
+                
+                <div class="tower-card ${cardAnimClass}" style="background: rgba(0,0,0,0.3); border: 1px solid ${borderCol}; border-radius: 8px; padding: 20px; max-width: 300px; margin: 0 auto; box-shadow: 0 4px 20px ${bgCol};">
+                    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Benötigte Punkte</div>
+                    <div style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 15px;">${config.target}</div>
+                    <div style="text-align: left; border-top: 1px solid ${borderCol}; padding-top: 15px;">
+                        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">Gefahren:</div>
+                        <ul style="padding-left: 20px; margin: 0; color: #e2e8f0; font-size: 13px; list-style: disc;">
+                            <li>Größe: <strong>${config.size.toUpperCase()}</strong></li>
+                            <li>Rotation: <strong>${config.rotation.toUpperCase()}</strong></li>
+                            ${config.movement !== 'off' ? `<li style="color:${themeColor}">⚠ HUNTER AKTIV</li>` : ''}
+                            ${config.style === 'spotlight' ? `<li style="color:#94a3b8">⚠ DUNKELHEIT</li>` : ''}
+                            ${config.cursor === 'magnet' ? `<li style="color:#f97316">⚠ MAGNET FELD</li>` : ''}
+                            ${config.cursor === 'mirror' ? `<li style="color:#e2e8f0">⚠ SPIEGELUNG</li>` : ''}
+                        </ul>
+                    </div>
                 </div>
             </div>
             
-            <button class="btn" id="startTowerBtn">BETRETEN</button>
+            <button class="btn ${cardAnimClass}" id="startTowerBtn" style="background-color: ${themeColor}; background-image: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(0,0,0,0.1)); border-color: ${themeColor}; box-shadow: 0 4px 15px ${themeColor}66; max-width: 300px; margin: 0 auto; display: block; font-size: 20px; padding: 15px;">EBENE ${floor} BETRETEN</button>
+            ${devBtn}
+            ${floor > 1 ? '<div style="margin-top: 15px; color: #ef4444; font-size: 12px; text-align: center;">⚠ Bei Niederlage zurück auf Ebene 1</div>' : ''}
         </div>
+        ${towerAscended ? `<div class="tower-slide-layer" style="background:${getTowerColor(floor-1 > 0 ? floor-1 : 1)}20;"></div>` : ''}
     `;
     
+    // Event Listeners
     setTimeout(() => {
         const btn = document.getElementById('startTowerBtn');
         if(btn) btn.onclick = onStart;
     }, 0);
     
+    // Partikel Animation wenn aufgestiegen
+    if (towerAscended) {
+        initTowerParticles(view, themeColor);
+        setTimeout(() => triggerTowerTextParticles(view, themeColor), 100);
+    }
+    
     view.classList.remove('hidden');
+}
+
+// Helper: Tower Color based on floor
+function getTowerColor(floor) {
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#6366f1', '#14b8a6'];
+    return colors[(floor - 1) % colors.length];
+}
+
+// Tower Partikel beim Aufstieg
+function initTowerParticles(container, color) {
+    const particleCount = 40;
+    for (let i = 0; i < particleCount; i++) {
+        setTimeout(() => {
+            const particle = document.createElement('div');
+            particle.className = 'tower-particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.bottom = '0px';
+            particle.style.color = color;
+            container.appendChild(particle);
+            const targetY = -(Math.random() * 400 + 100);
+            const duration = 1500 + Math.random() * 1000;
+            const delay = Math.random() * 500;
+            animateTowerParticle(particle, targetY, duration, delay);
+        }, i * 30);
+    }
+}
+
+function animateTowerParticle(particle, targetY, duration, delay) {
+    setTimeout(() => {
+        const startTime = performance.now();
+        const startY = 0;
+        const startOpacity = 1;
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const currentY = startY + (targetY * eased);
+            const currentOpacity = startOpacity * (1 - progress);
+            particle.style.transform = `translateY(${currentY}px)`;
+            particle.style.opacity = currentOpacity;
+            if (progress < 1) requestAnimationFrame(update); 
+            else particle.remove();
+        }
+        requestAnimationFrame(update);
+    }, delay);
+}
+
+function triggerTowerTextParticles(container, color) {
+    const levelText = document.getElementById('towerLevelText');
+    if (!levelText) return;
+    
+    const rect = levelText.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const textParticle = document.createElement('div');
+    textParticle.className = 'tower-text-particle';
+    textParticle.innerText = '⬆ LEVEL UP';
+    textParticle.style.left = (rect.left - containerRect.left + rect.width/2 - 60) + 'px';
+    textParticle.style.top = (rect.top - containerRect.top - 30) + 'px';
+    textParticle.style.color = color;
+    container.appendChild(textParticle);
+    setTimeout(() => textParticle.remove(), 2000);
 }
 
 export function switchMainTab(tab) {

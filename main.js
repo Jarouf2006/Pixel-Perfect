@@ -36,7 +36,7 @@ let state = {
     round: 1, maxRounds: 5, score: 0, vertices: [], centerPos: {x: 0, y: 0},
     rotation: 0, rotationSpeed: 0, velocity: {x: 0, y: 0},
     blitzPhase: null, blitzEndTime: 0, blitzExtreme: false,
-    pulsarPhase: 0, miragePhase: 0, towerFloor: 1, towerTarget: 0,
+    pulsarPhase: 0, miragePhase: 0, towerFloor: 1, towerTarget: 0, towerAscended: false,
     currentSettings: {}, input: setupInput(canvas), startTime: 0, result: null 
 };
 
@@ -150,6 +150,54 @@ window.devLevelUp = () => {
     } 
 };
 
+window.titleClickEffect = (event) => {
+    const title = document.getElementById('mainTitle');
+    if (!title) return;
+    
+    // Pop Animation
+    title.classList.remove('title-pop');
+    void title.offsetWidth;
+    title.classList.add('title-pop');
+    
+    // Get current glow color for particles
+    const glowColor = getComputedStyle(title).getPropertyValue('--glow-color') || 'rgba(52, 211, 153, 0.8)';
+    const rect = title.getBoundingClientRect();
+    
+    // Spawn particles from click position
+    for (let i = 0; i < 12; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'title-particle';
+        particle.style.background = glowColor.replace('0.6', '1');
+        particle.style.boxShadow = `0 0 6px ${glowColor}, 0 0 10px ${glowColor}`;
+        particle.style.left = (event.clientX - rect.left) + 'px';
+        particle.style.top = (event.clientY - rect.top) + 'px';
+        title.appendChild(particle);
+        
+        const angle = (Math.PI * 2 / 12) * i + Math.random() * 0.5;
+        const speed = 3 + Math.random() * 4;
+        let vx = Math.cos(angle) * speed;
+        let vy = Math.sin(angle) * speed;
+        let life = 1;
+        
+        function animate() {
+            if (life <= 0) {
+                particle.remove();
+            } else {
+                life -= 0.025;
+                particle.style.left = (parseFloat(particle.style.left) + vx) + 'px';
+                particle.style.top = (parseFloat(particle.style.top) + vy) + 'px';
+                particle.style.opacity = life;
+                particle.style.transform = `scale(${life})`;
+                vx *= 0.96;
+                vy *= 0.96;
+                vy += 0.15; // Gravity
+                requestAnimationFrame(animate);
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+};
+
 window.backToMenu = () => {
     state.isRunning = false; state.vertices = []; state.result = null; state.input.clicked = false;
     canvas.classList.remove('hide-cursor');
@@ -170,10 +218,48 @@ window.switchMainTab = (tab) => {
         state.mode = 'tower';
         const config = getTowerConfig(state.towerFloor);
         const themeColor = getTowerColor(state.towerFloor);
-        MenuUI.updateTowerUI(state.towerFloor, state.user.towerMax, config, themeColor, window.startGame);
-    } else { setMode(state.lastMode); }
+        MenuUI.updateTowerUI(
+            state.towerFloor, 
+            state.user.towerMax, 
+            config, 
+            themeColor, 
+            window.startGame,
+            state.user.name,
+            state.towerAscended
+        );
+        state.towerAscended = false; // Reset nach Anzeige
+        
+        // Dev Skip Button Listener
+        setTimeout(() => {
+            const devBtn = document.getElementById('devSkipBtn');
+            if (devBtn) devBtn.onclick = window.devSkipLevel;
+        }, 0);
+    } else { 
+        setMode(state.lastMode); 
+    }
     MenuUI.switchMainTab(tab);
 };
+
+window.devSkipLevel = () => {
+    if (!state.user || state.user.name.toLowerCase() !== 'liam') return;
+    
+    if (state.towerFloor >= 30) {
+        // Bei Level 30 -> Win simulieren
+        state.score = getTowerConfig(30).target + 1000;
+        state.towerTarget = getTowerConfig(30).target;
+        state.mode = 'tower';
+        document.getElementById('startScreen').classList.add('hidden');
+        endGame();
+        return;
+    }
+    
+    state.towerFloor = Math.min(30, state.towerFloor + 10);
+    if (state.towerFloor > state.user.towerMax) state.user.towerMax = state.towerFloor;
+    state.towerAscended = true;
+    API.saveUser(state.user);
+    window.switchMainTab('tower');
+};
+
 window.nextRound = () => { if (state.round < state.maxRounds) { state.round++; updateHUD(); startRound(); } else { endGame(); } };
 
 window.startGame = () => {
@@ -204,11 +290,24 @@ window.startGame = () => {
     // HUD anzeigen
     const gameHud = document.getElementById('gameHud');
     if(gameHud) {
-        gameHud.style.display = 'block';
         gameHud.classList.remove('invisible');
     }
     
-    document.getElementById('timerContainer').style.opacity = (state.currentSettings.timer !== 'off') ? '1' : '0';
+    // Modus Badge updaten
+    const modeBadge = document.getElementById('modeBadge');
+    if (modeBadge) {
+        let modeName = state.mode.toUpperCase();
+        if (state.mode === 'tower') modeName = `EBENE ${state.towerFloor}`;
+        if (state.mode === 'blitz' && state.blitzExtreme) modeName = 'EXTREME';
+        modeBadge.innerText = modeName;
+    }
+    
+    // Timer anzeigen wenn aktiv
+    const timerContainer = document.getElementById('timerContainer');
+    if (timerContainer) {
+        timerContainer.style.opacity = (state.currentSettings.timer !== 'off') ? '1' : '0';
+    }
+    
     updateHUD();
     startRound();
     if (!state.isRunning) { state.isRunning = true; requestAnimationFrame(gameLoop); }
@@ -331,14 +430,25 @@ function endGame() {
     const gameHud = document.getElementById('gameHud');
     if(gameHud) {
         gameHud.classList.add('invisible');
-        gameHud.style.display = 'none';
     }
+    
+    const timerContainer = document.getElementById('timerContainer');
+    if (timerContainer) {
+        timerContainer.style.opacity = '0';
+    }
+    
     document.getElementById('nextOverlay').classList.add('hidden');
     let earnedXp = state.score; let towerSuccess = false;
     if (state.mode === 'tower') {
         towerSuccess = state.score >= state.towerTarget;
-        if (towerSuccess) { state.towerFloor++; if (state.towerFloor > state.user.towerMax) state.user.towerMax = state.towerFloor; } 
-        else { state.towerFloor = 1; }
+        if (towerSuccess) { 
+            state.towerFloor++; 
+            if (state.towerFloor > state.user.towerMax) state.user.towerMax = state.towerFloor;
+            state.towerAscended = true; // Animation beim nächsten Tower-Aufruf
+        } 
+        else { 
+            state.towerFloor = 1; 
+        }
     }
     state.user.xp += earnedXp;
     state.user.level = 1 + Math.floor(state.user.xp / XP_PER_LEVEL);

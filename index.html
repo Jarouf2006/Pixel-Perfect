@@ -9,34 +9,50 @@
 </head>
 <body>
 
-    <!-- GAME CANVAS (versteckt bis Spiel startet) -->
-    <canvas id="gameCanvas" width="900" height="600"></canvas>
-
-    <!-- GAME HUD (Score, Runde, Timer) -->
-    <div id="gameHud" class="invisible" style="display: none;">
-        <div id="scoreDisplay">0</div>
-        <div id="roundDisplay">1</div>
-        <div id="timerContainer" style="opacity: 0;">
-            <div id="timerBar"></div>
-        </div>
-        <div id="lastDistance">-</div>
+    <!-- TIMER BAR (über dem Canvas) -->
+    <div class="timer-container" id="timerContainer">
+        <div class="timer-bar" id="timerBar"></div>
     </div>
 
-    <!-- NEXT ROUND OVERLAY -->
-    <div id="nextOverlay" class="hidden">
-        <div style="background: rgba(15, 23, 42, 0.95); padding: 40px; border-radius: 12px; text-align: center;">
-            <h2 style="font-size: 32px; margin-bottom: 20px;">Nächste Runde</h2>
-            <button class="btn" onclick="nextRound()">Weiter</button>
+    <!-- GAME HUD (Score, Runde, Modus) -->
+    <div class="hud invisible" id="gameHud">
+        <div class="hud-box" style="text-align: left;">
+            <div class="hud-label">Punkte</div>
+            <div class="hud-value highlight" id="scoreDisplay">0</div>
+        </div>
+        <div class="hud-box">
+            <div class="hud-label">Runde</div>
+            <div class="hud-value"><span id="roundDisplay">1</span>/5</div>
+        </div>
+        <div class="hud-box" style="text-align: right;">
+            <div class="hud-label">Modus <span class="diff-badge" id="modeBadge">NORMAL</span></div>
+            <div class="hud-value" id="lastDistance">-</div>
+        </div>
+    </div>
+
+    <!-- GAME CANVAS -->
+    <canvas id="gameCanvas" width="900" height="600"></canvas>
+
+    <!-- ROUND RESULT POPUP -->
+    <div class="overlay hidden" id="nextOverlay">
+        <div class="popup-card">
+            <div class="hud-label" id="roundTitle" style="font-size: 14px; color: #94a3b8;">ERGEBNIS</div>
+            <div class="score-big" id="roundScoreVal">+0</div>
+            <div id="roundFeedback" style="color: #fff; margin-bottom: 20px; font-weight: bold;">-</div>
+            <button class="btn" id="nextBtn" onclick="nextRound()">Weiter</button>
         </div>
     </div>
 
     <!-- END SCREEN -->
-    <div id="endScreen" class="hidden">
-        <div style="background: rgba(15, 23, 42, 0.95); padding: 40px; border-radius: 12px; text-align: center; max-width: 500px;">
-            <h1 style="font-size: 48px; margin-bottom: 20px;">Spiel Beendet!</h1>
-            <div id="finalScore" style="font-size: 24px; margin-bottom: 30px;"></div>
-            <button class="btn" onclick="backToMenu()">Zurück zum Menü</button>
+    <div class="overlay hidden" id="endScreen">
+        <h1 id="endTitle">Gut gemacht!</h1>
+        <p style="color: #94a3b8; margin-bottom: 10px;">Runde beendet</p>
+        <div class="score-big" id="finalScore">0</div>
+        <div style="width:100%; max-width: 300px; background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:20px;">
+            <div class="hud-label">Gesammelte XP</div>
+            <div id="earnedXp" style="font-size:24px; color:#34d399; font-weight:bold;">+0 XP</div>
         </div>
+        <button class="btn" onclick="backToMenu()">Zurück zum Menü</button>
     </div>
 
     <!-- INTRO OVERLAY (Gast / Login Auswahl) -->
@@ -64,7 +80,7 @@
 
     <!-- DASHBOARD / START SCREEN (Hauptmenü nach Login) -->
     <div id="startScreen" class="main-container hidden">
-        <h1 class="main-title" id="mainTitle">Pixel Perfect</h1>
+        <h1 class="main-title" id="mainTitle" onclick="titleClickEffect(event)">Pixel Perfect</h1>
 
         <!-- ARC PROFILE (oben rechts) - Arc Raiders Style -->
         <div class="arc-profile-container" onclick="triggerXPAnim()" ondblclick="devLevelUp()">
