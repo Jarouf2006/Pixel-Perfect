@@ -36,8 +36,11 @@ let state = {
     round: 1, maxRounds: 5, score: 0, vertices: [], centerPos: {x: 0, y: 0},
     rotation: 0, rotationSpeed: 0, velocity: {x: 0, y: 0},
     blitzPhase: null, blitzEndTime: 0, blitzExtreme: false,
-    pulsarPhase: 0, miragePhase: 0, towerFloor: 1, towerTarget: 0, towerAscended: false,
-    currentSettings: {}, input: setupInput(canvas), startTime: 0, result: null 
+    pulsarPhase: 0, miragePhase: 0, towerFloor: 1, towerTarget: 0, towerAscended: false, towerColor: '#3b82f6',
+    currentSettings: {}, input: setupInput(canvas), startTime: 0, result: null,
+    frozen: false, frozenTime: 0, lastDistance: null,
+    // Perfect Streak Tracking
+    perfectStreak: 0, perfectThisRound: false, roundPerfectCount: 0
 };
 
 // --- INIT ---
@@ -199,18 +202,41 @@ window.titleClickEffect = (event) => {
 };
 
 window.backToMenu = () => {
+    const wasInTower = state.mode === 'tower';
+    
     state.isRunning = false; state.vertices = []; state.result = null; state.input.clicked = false;
     canvas.classList.remove('hide-cursor');
     
     // WICHTIG: Kasten-Look entfernen (wieder Edgeless machen)
     canvas.classList.remove('ingame');
     
-    // HUD verstecken
+    // Burning Title zurücksetzen
+    LeaderboardUI.resetBurningTitle();
+    
+    // Game Container verstecken
+    const gameContainer = document.getElementById('gameContainer');
+    if (gameContainer) {
+        gameContainer.classList.add('hidden');
+    }
+    
+    // HUD und Timer verstecken
     const gameHud = document.getElementById('gameHud');
-    if(gameHud) gameHud.style.display = 'none';
+    if (gameHud) {
+        gameHud.classList.add('invisible');
+        gameHud.style.display = 'none';
+    }
+    const timerContainer = document.getElementById('timerContainer');
+    if (timerContainer) {
+        timerContainer.style.display = 'none';
+    }
     
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     initApp();
+    
+    // Nach Tower-Spiel zurück zum Tower Tab
+    if (wasInTower) {
+        setTimeout(() => window.switchMainTab('tower'), 50);
+    }
 };
 
 window.switchMainTab = (tab) => {
@@ -227,6 +253,9 @@ window.switchMainTab = (tab) => {
             state.user.name,
             state.towerAscended
         );
+        // Titel Farbe an Tower-Ebene anpassen
+        MenuUI.updateTitleForTower(themeColor);
+        
         state.towerAscended = false; // Reset nach Anzeige
         
         // Dev Skip Button Listener
@@ -260,16 +289,41 @@ window.devSkipLevel = () => {
     window.switchMainTab('tower');
 };
 
-window.nextRound = () => { if (state.round < state.maxRounds) { state.round++; updateHUD(); startRound(); } else { endGame(); } };
+window.nextRound = () => { 
+    // Streak-Logik: Wenn diese Runde mindestens ein Perfect hatte, Streak erhöhen, sonst zurücksetzen
+    if (state.perfectThisRound) {
+        state.perfectStreak++;
+    } else {
+        state.perfectStreak = 0;
+        // Feuer im Titel löschen wenn Streak bricht
+        LeaderboardUI.resetBurningTitle();
+    }
+    // Reset für nächste Runde
+    state.perfectThisRound = false;
+    state.roundPerfectCount = 0;
+    
+    if (state.round < state.maxRounds) { 
+        state.round++; 
+        updateHUD(); 
+        startRound(); 
+    } else { 
+        endGame(); 
+    } 
+};
 
 window.startGame = () => {
-    if (state.mode === 'tower') { state.currentSettings = getTowerConfig(state.towerFloor); state.towerTarget = state.currentSettings.target; } 
+    if (state.mode === 'tower') { 
+        state.currentSettings = getTowerConfig(state.towerFloor); 
+        state.towerTarget = state.currentSettings.target;
+        state.towerColor = getTowerColor(state.towerFloor); // Farbe für Rendering
+    } 
     else if (state.mode === 'custom') { state.currentSettings = getCustomSettings(); } 
     else {
         state.currentSettings = { ...MODE_PRESETS[state.mode] || MODE_PRESETS.normal };
-        if (state.mode === 'normal') {
-            state.currentSettings.size = document.getElementById('sizeSelect')?.value || 'medium';
-            state.currentSettings.complexity = document.getElementById('compSelect')?.value || 'medium';
+        // Größe und Abstraktion für alle Modi (außer Blitz) anwenden
+        if (state.mode !== 'blitz') {
+            state.currentSettings.size = document.getElementById('sizeSelect')?.value || state.currentSettings.size || 'medium';
+            state.currentSettings.complexity = document.getElementById('compSelect')?.value || state.currentSettings.complexity || 'medium';
         }
         if (state.mode === 'blitz' && state.blitzExtreme) { state.currentSettings.size = 'small'; state.currentSettings.rotation = 'fast'; state.currentSettings.timer = '3000'; }
     }
@@ -284,13 +338,23 @@ window.startGame = () => {
     // WICHTIG: Jetzt den Kasten-Look aktivieren (Hintergrund dunkel machen)
     canvas.classList.add('ingame');
 
-    state.score = 0; state.round = 1;
+    state.score = 0; state.round = 1; state.lastDistance = null;
+    // Reset Perfect Streak
+    state.perfectStreak = 0; state.perfectThisRound = false; state.roundPerfectCount = 0;
+    
     document.getElementById('startScreen').classList.add('hidden');
     
-    // HUD anzeigen
+    // Game Container anzeigen
+    const gameContainer = document.getElementById('gameContainer');
+    if (gameContainer) {
+        gameContainer.classList.remove('hidden');
+    }
+    
+    // HUD anzeigen (war durch initApp versteckt)
     const gameHud = document.getElementById('gameHud');
-    if(gameHud) {
+    if (gameHud) {
         gameHud.classList.remove('invisible');
+        gameHud.style.display = 'flex';
     }
     
     // Modus Badge updaten
@@ -302,10 +366,15 @@ window.startGame = () => {
         modeBadge.innerText = modeName;
     }
     
-    // Timer anzeigen wenn aktiv
+    // Timer anzeigen wenn aktiv, sonst komplett verstecken (kein Platz)
     const timerContainer = document.getElementById('timerContainer');
     if (timerContainer) {
-        timerContainer.style.opacity = (state.currentSettings.timer !== 'off') ? '1' : '0';
+        if (state.currentSettings.timer !== 'off') {
+            timerContainer.style.display = 'block';
+            timerContainer.style.opacity = '1';
+        } else {
+            timerContainer.style.display = 'none';
+        }
     }
     
     updateHUD();
@@ -332,6 +401,7 @@ function setMode(modeId) {
 function startRound() {
     document.getElementById('nextOverlay').classList.add('hidden');
     state.result = null;
+    state.frozen = false; // Reset frozen state für neue Runde
     state.vertices = createPolygon(state.currentSettings.size, state.currentSettings.complexity);
     
     // WICHTIG: Dynamische Grenzen für 900px Breite
@@ -362,23 +432,29 @@ function startRound() {
 function gameLoop() {
     if (!state.isRunning) return;
     processInputEffects(state.input, state.currentSettings, state.centerPos);
-    if (state.currentSettings.special === 'pulsar') state.pulsarPhase += 0.05;
-    if (state.currentSettings.special === 'mirage') state.miragePhase += 0.02 + (state.round * 0.015);
-
-    if (state.currentSettings.movement === 'hunter' && (!state.blitzPhase || state.blitzPhase === 'input')) {
-        state.centerPos.x += state.velocity.x;
-        state.centerPos.y += state.velocity.y;
-        
-        // WICHTIG: Bouncing an den dynamischen Rändern (Puffer 100px)
-        const bounceMargin = 100;
-        if (state.centerPos.x < bounceMargin || state.centerPos.x > canvas.width - bounceMargin) state.velocity.x *= -1;
-        if (state.centerPos.y < bounceMargin || state.centerPos.y > canvas.height - bounceMargin) state.velocity.y *= -1;
-    }
-
-    if (state.currentSettings.rotation !== 'off' && (!state.blitzPhase || state.blitzPhase !== 'input')) state.rotation += state.rotationSpeed;
     
-    const timeUp = updateTimerUI(state.currentSettings, state.startTime, state.blitzEndTime, state.blitzPhase);
-    if (state.currentSettings.visibility === 'blitz') {
+    // Nur updaten wenn nicht frozen (nach Klick)
+    if (!state.frozen) {
+        if (state.currentSettings.special === 'pulsar') state.pulsarPhase += 0.05;
+        if (state.currentSettings.special === 'mirage') state.miragePhase += 0.02 + (state.round * 0.015);
+
+        if (state.currentSettings.movement === 'hunter' && (!state.blitzPhase || state.blitzPhase === 'input')) {
+            state.centerPos.x += state.velocity.x;
+            state.centerPos.y += state.velocity.y;
+            
+            // WICHTIG: Bouncing an den dynamischen Rändern (Puffer 100px)
+            const bounceMargin = 100;
+            if (state.centerPos.x < bounceMargin || state.centerPos.x > canvas.width - bounceMargin) state.velocity.x *= -1;
+            if (state.centerPos.y < bounceMargin || state.centerPos.y > canvas.height - bounceMargin) state.velocity.y *= -1;
+        }
+
+        if (state.currentSettings.rotation !== 'off' && (!state.blitzPhase || state.blitzPhase !== 'input')) state.rotation += state.rotationSpeed;
+    }
+    
+    // Timer nur updaten wenn nicht frozen
+    const timeUp = state.frozen ? false : updateTimerUI(state.currentSettings, state.startTime, state.blitzEndTime, state.blitzPhase);
+    
+    if (state.currentSettings.visibility === 'blitz' && !state.frozen) {
         const now = Date.now();
         if (now < state.blitzEndTime) state.blitzPhase = 'countdown';
         else if (now < state.blitzEndTime + 250) state.blitzPhase = 'flash';
@@ -387,9 +463,13 @@ function gameLoop() {
 
     if (state.waitingForClick) {
         if (timeUp) { handleRoundEnd(999); } 
-        else if (state.input.clicked) {
+        else if (state.input.clicked && !state.frozen) {
             const isBlitz = state.currentSettings.visibility === 'blitz';
             if (!isBlitz || (isBlitz && state.blitzPhase === 'input')) {
+                // FREEZE: Stoppe alles sofort nach Klick
+                state.frozen = true;
+                state.frozenTime = Date.now();
+                
                 const hitData = calculateHit(state.input, state.centerPos, state.rotation, state.vertices);
                 handleRoundEnd(hitData.dist, hitData.targetX, hitData.targetY);
             }
@@ -420,22 +500,26 @@ function handleRoundEnd(dist, tx = 0, ty = 0) {
     state.waitingForClick = false;
     const points = calculateScore(dist, state.currentSettings, state.mode, state.blitzExtreme);
     state.score += points;
+    
+    // Perfect Streak Tracking (Perfekt = dist < 4px)
+    const isPerfect = dist < 4;
+    if (isPerfect) {
+        state.perfectThisRound = true;
+        state.roundPerfectCount++;
+        // Sofort das Feuer aktivieren! Die Streak wird die Intensität später erhöhen
+        LeaderboardUI.updateBurningTitle(state.perfectStreak + 1);
+    }
+    
     updateHUD(dist < 900 ? dist : null);
     if(dist < 900) { state.result = { clickX: state.input.deflectedX, clickY: state.input.deflectedY, targetX: tx, targetY: ty, dist: dist }; }
-    setTimeout(() => { LeaderboardUI.showRoundResult(points, dist, state.round, state.maxRounds, window.nextRound); }, 1000);
+    setTimeout(() => { LeaderboardUI.showRoundResult(points, dist, state.round, state.maxRounds, window.nextRound, isPerfect, state.perfectStreak); }, 1000);
 }
 
 function endGame() {
     state.isRunning = false;
-    const gameHud = document.getElementById('gameHud');
-    if(gameHud) {
-        gameHud.classList.add('invisible');
-    }
     
-    const timerContainer = document.getElementById('timerContainer');
-    if (timerContainer) {
-        timerContainer.style.opacity = '0';
-    }
+    // HUD und Timer bleiben sichtbar während End Screen!
+    // Werden erst in backToMenu() versteckt
     
     document.getElementById('nextOverlay').classList.add('hidden');
     let earnedXp = state.score; let towerSuccess = false;
@@ -468,7 +552,11 @@ function getCustomSettings() {
 function updateHUD(dist) {
     document.getElementById('scoreDisplay').innerText = state.score;
     document.getElementById('roundDisplay').innerText = state.round;
-    document.getElementById('lastDistance').innerText = dist ? dist.toFixed(1) + "px" : "-";
+    // Nur updaten wenn dist übergeben wurde, sonst letzten Wert behalten
+    if (dist !== undefined) {
+        state.lastDistance = dist;
+    }
+    document.getElementById('lastDistance').innerText = state.lastDistance ? state.lastDistance.toFixed(1) + "px" : "-";
 }
 function getTowerConfig(floor) {
     let config = { size: 'large', complexity: 'simple', rotation: 'off', timer: 'off', visibility: 'normal', movement: 'off', special: 'off', style: 'normal', cursor: 'normal', target: 1000 };

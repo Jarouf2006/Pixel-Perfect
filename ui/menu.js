@@ -47,27 +47,7 @@ export function updateSettingsUI(mode, blitzExtreme) {
         // FIX: Entferne distribute-Klasse erstmal
         settingsArea.classList.remove('distribute');
         
-        if (mode === 'normal') {
-            settingsArea.innerHTML = `
-                <div class="setting-group">
-                    <select id="sizeSelect" class="edgeless-select" data-label="Größe">
-                        <option value="large">Groß</option>
-                        <option value="medium" selected>Mittel</option>
-                        <option value="small">Klein</option>
-                    </select>
-                </div>
-                <div class="setting-group">
-                    <select id="compSelect" class="edgeless-select" data-label="Abstraktion">
-                        <option value="simple">Simpel</option>
-                        <option value="medium" selected>Normal</option>
-                        <option value="chaos">Chaos</option>
-                    </select>
-                </div>`;
-            // FIX: Wenige Settings -> verteilen
-            settingsArea.classList.add('distribute');
-            initSelectLabels(settingsArea);
-            
-        } else if (mode === 'blitz') {
+        if (mode === 'blitz') {
             settingsArea.innerHTML = `
                 <div class="switch-container">
                     <span class="switch-label">🔥 BLITZ EXTREME</span>
@@ -144,16 +124,30 @@ export function updateSettingsUI(mode, blitzExtreme) {
             initSelectLabels(settingsArea);
             
         } else {
-            // Andere Modi ohne Settings -> leere Box, zentriert
-            settingsArea.innerHTML = `<div style="color: #64748b; text-align: center; font-size: 14px;">Keine Einstellungen für diesen Modus</div>`;
+            // Alle anderen Modi: Größe und Abstraktion einstellbar
+            settingsArea.innerHTML = `
+                <div class="setting-group">
+                    <select id="sizeSelect" class="edgeless-select" data-label="Größe">
+                        <option value="large">Groß</option>
+                        <option value="medium" selected>Mittel</option>
+                        <option value="small">Klein</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <select id="compSelect" class="edgeless-select" data-label="Abstraktion">
+                        <option value="simple">Simpel</option>
+                        <option value="medium" selected>Normal</option>
+                        <option value="chaos">Chaos</option>
+                    </select>
+                </div>`;
             settingsArea.classList.add('distribute');
+            initSelectLabels(settingsArea);
         }
     }
     
     if (title) {
-        // Reset styles
-        title.style.background = ""; 
-        title.style.webkitTextFillColor = ""; 
+        // Get the title-text span (contains the gradient)
+        const titleText = title.querySelector('.title-text');
         
         let grad = "";
         let glowColor = "rgba(52, 211, 153, 0.6)"; // Default grün
@@ -209,80 +203,130 @@ export function updateSettingsUI(mode, blitzExtreme) {
         }
         
         if (grad) {
-            title.style.background = grad;
-            title.style.webkitBackgroundClip = "text"; 
-            title.style.webkitTextFillColor = "transparent";
+            // Apply to title-text span if it exists
+            if (titleText) {
+                titleText.style.background = grad;
+                titleText.style.webkitBackgroundClip = "text";
+                titleText.style.webkitTextFillColor = "transparent";
+            } else {
+                // Fallback for auth screens without spans
+                title.style.background = grad;
+                title.style.webkitBackgroundClip = "text"; 
+                title.style.webkitTextFillColor = "transparent";
+            }
             title.style.setProperty('--glow-color', glowColor);
         }
     }
+}
+
+// Update Title für Tower Mode - passt Farbe an aktuelle Ebene an
+export function updateTitleForTower(themeColor) {
+    const title = document.getElementById('mainTitle');
+    if (!title) return;
+    
+    const titleText = title.querySelector('.title-text');
+    
+    // Hellere Version der Farbe für Gradient
+    const lighterColor = themeColor + 'cc'; // etwas transparenter
+    const grad = `linear-gradient(to right, ${themeColor}, ${lighterColor})`;
+    
+    if (titleText) {
+        titleText.style.background = grad;
+        titleText.style.webkitBackgroundClip = "text";
+        titleText.style.webkitTextFillColor = "transparent";
+    } else {
+        title.style.background = grad;
+        title.style.webkitBackgroundClip = "text"; 
+        title.style.webkitTextFillColor = "transparent";
+    }
+    
+    title.style.setProperty('--glow-color', hexToRgba(themeColor, 0.6));
+}
+
+// Helper: Hex zu RGBA
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 export function updateTowerUI(floor, maxFloor, config, themeColor, onStart, userName, towerAscended) {
     const view = document.getElementById('viewTower');
     if(!view) return;
 
-    const bgCol = themeColor + '20';
-    const borderCol = themeColor + '60';
-    
-    let bgStyle = `background: ${bgCol};`;
-    let animClass = "";
-    let contentClass = "";
-    let cardAnimClass = "";
-    
-    // Animation wenn aufgestiegen
-    if (towerAscended) {
-        const prevColor = floor > 1 ? getTowerColor(floor - 1) : themeColor;
-        const gradStart = `${themeColor}30`;
-        const gradEnd = `${prevColor}30`;
-        bgStyle = `background: linear-gradient(to bottom, ${gradStart} 0%, ${gradStart} 40%, ${gradEnd} 60%, ${gradEnd} 100%); background-size: 100% 250%; background-position: 0% 100%;`;
-        animClass = "tower-animating-bg";
-        contentClass = "tower-content-fade";
-        cardAnimClass = "tower-card-anim";
-    }
-    
     // Dev Button nur für Liam
     let devBtn = '';
     if (userName && userName.toLowerCase() === 'liam') {
-        devBtn = `<button class="btn tower-dev-btn" id="devSkipBtn">🚧 DEV: SKIP 10 LEVELS 🚧</button>`;
+        devBtn = `<button class="btn tower-dev-btn" id="devSkipBtn">🚧 DEV: SKIP 10</button>`;
     }
 
     // Rekord Anzeige mit Pokal wenn Level 30 erreicht
     let recordDisplay = `Rekord: Ebene ${maxFloor || 1}`;
     if (maxFloor >= 30) recordDisplay += " 🏆";
 
+    // Animationsklassen
+    const contentClass = towerAscended ? "tower-content-fade" : "";
+    const cardAnimClass = towerAscended ? "tower-card-anim" : "";
+
     view.innerHTML = `
-        <div class="tower-elevator-bg ${animClass}" style="${bgStyle}"></div>
-        <div class="tower-content ${contentClass}">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 60px; margin-bottom: 10px; filter: drop-shadow(0 0 10px ${themeColor});" id="towerLevelIcon">🗼</div>
-                <h2 style="font-size: 32px; color: ${themeColor}; margin-bottom: 5px; text-transform: uppercase; font-style: italic;" id="towerLevelText">Ebene ${floor}</h2>
-                
-                <div style="color: #94a3b8; font-size: 14px; margin-bottom: 2px;">${recordDisplay}</div>
-                <div style="color: #64748b; font-size: 12px; margin-bottom: 15px;">(Max. Ebene 30)</div>
-                <div style="font-size: 12px; color: #fbbf24; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">✨ EXKLUSIVE BELOHNUNGEN ✨</div>
-                
-                <div class="tower-card ${cardAnimClass}" style="background: rgba(0,0,0,0.3); border: 1px solid ${borderCol}; border-radius: 8px; padding: 20px; max-width: 300px; margin: 0 auto; box-shadow: 0 4px 20px ${bgCol};">
-                    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Benötigte Punkte</div>
-                    <div style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 15px;">${config.target}</div>
-                    <div style="text-align: left; border-top: 1px solid ${borderCol}; padding-top: 15px;">
-                        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">Gefahren:</div>
-                        <ul style="padding-left: 20px; margin: 0; color: #e2e8f0; font-size: 13px; list-style: disc;">
-                            <li>Größe: <strong>${config.size.toUpperCase()}</strong></li>
-                            <li>Rotation: <strong>${config.rotation.toUpperCase()}</strong></li>
-                            ${config.movement !== 'off' ? `<li style="color:${themeColor}">⚠ HUNTER AKTIV</li>` : ''}
-                            ${config.style === 'spotlight' ? `<li style="color:#94a3b8">⚠ DUNKELHEIT</li>` : ''}
-                            ${config.cursor === 'magnet' ? `<li style="color:#f97316">⚠ MAGNET FELD</li>` : ''}
-                            ${config.cursor === 'mirror' ? `<li style="color:#e2e8f0">⚠ SPIEGELUNG</li>` : ''}
-                        </ul>
-                    </div>
+        <!-- LINKE SEITE: Tower Info (wie modesGrid) -->
+        <div class="tower-main">
+            <div class="tower-header ${cardAnimClass}">
+                <div class="tower-icon" style="filter: drop-shadow(0 0 15px ${themeColor});">🗼</div>
+                <div class="tower-info">
+                    <h2 class="tower-floor ${contentClass}" style="color: ${themeColor};" id="towerLevelText">Ebene ${floor}</h2>
+                    <div class="tower-record">${recordDisplay}</div>
                 </div>
             </div>
             
-            <button class="btn ${cardAnimClass}" id="startTowerBtn" style="background-color: ${themeColor}; background-image: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(0,0,0,0.1)); border-color: ${themeColor}; box-shadow: 0 4px 15px ${themeColor}66; max-width: 300px; margin: 0 auto; display: block; font-size: 20px; padding: 15px;">EBENE ${floor} BETRETEN</button>
-            ${devBtn}
-            ${floor > 1 ? '<div style="margin-top: 15px; color: #ef4444; font-size: 12px; text-align: center;">⚠ Bei Niederlage zurück auf Ebene 1</div>' : ''}
+            <div class="tower-stats-grid ${cardAnimClass}">
+                <div class="tower-stat-card">
+                    <div class="tower-stat-icon">🎯</div>
+                    <div class="tower-stat-label">Ziel-Punkte</div>
+                    <div class="tower-stat-value">${config.target}</div>
+                </div>
+                <div class="tower-stat-card">
+                    <div class="tower-stat-icon">${config.size === 'small' ? '🔬' : config.size === 'large' ? '🔭' : '📐'}</div>
+                    <div class="tower-stat-label">Größe</div>
+                    <div class="tower-stat-value">${config.size.toUpperCase()}</div>
+                </div>
+                <div class="tower-stat-card">
+                    <div class="tower-stat-icon">${config.rotation !== 'off' ? '🔄' : '⏸️'}</div>
+                    <div class="tower-stat-label">Rotation</div>
+                    <div class="tower-stat-value">${config.rotation.toUpperCase()}</div>
+                </div>
+            </div>
         </div>
-        ${towerAscended ? `<div class="tower-slide-layer" style="background:${getTowerColor(floor-1 > 0 ? floor-1 : 1)}20;"></div>` : ''}
+        
+        <!-- RECHTE SEITE: Gefahren & Info (wie right-panel) -->
+        <div class="tower-sidebar">
+            <div class="tower-dangers ${cardAnimClass}">
+                <div class="tower-dangers-title">⚠️ Gefahren</div>
+                <ul class="tower-dangers-list">
+                    ${config.movement !== 'off' ? `<li style="color:${themeColor}">🏃 Hunter aktiv</li>` : '<li class="inactive">🏃 Hunter inaktiv</li>'}
+                    ${config.style === 'spotlight' ? `<li style="color:#94a3b8">🔦 Dunkelheit</li>` : ''}
+                    ${config.cursor === 'magnet' ? `<li style="color:#f97316">🧲 Magnet-Feld</li>` : ''}
+                    ${config.cursor === 'mirror' ? `<li style="color:#e2e8f0">🪞 Spiegelung</li>` : ''}
+                    ${config.timer !== 'off' ? `<li style="color:#ef4444">⏱️ Zeitlimit</li>` : ''}
+                    ${config.special === 'glitch' ? `<li style="color:#a855f7">👾 Glitch</li>` : ''}
+                    ${config.special === 'mirage' ? `<li style="color:#14b8a6">🧞 Mirage</li>` : ''}
+                </ul>
+            </div>
+            
+            <div class="tower-reward ${cardAnimClass}">
+                <div class="tower-reward-text">✨ XP Belohnung: <strong style="color: ${themeColor};">${config.target}</strong></div>
+                ${floor > 1 ? '<div class="tower-warning">⚠ Bei Niederlage zurück auf Ebene 1</div>' : '<div class="tower-hint">💡 Erste Ebene - kein Risiko!</div>'}
+            </div>
+        </div>
+        
+        <!-- BUTTON BEREICH (wie buttons-panel) -->
+        <div class="tower-buttons">
+            <button class="btn ${cardAnimClass}" id="startTowerBtn" style="background: linear-gradient(135deg, ${themeColor}, ${themeColor}dd); border-color: ${themeColor}; box-shadow: 0 4px 20px ${themeColor}40;">
+                Ebene ${floor} Betreten
+            </button>
+            ${devBtn}
+        </div>
     `;
     
     // Event Listeners
@@ -293,8 +337,7 @@ export function updateTowerUI(floor, maxFloor, config, themeColor, onStart, user
     
     // Partikel Animation wenn aufgestiegen
     if (towerAscended) {
-        initTowerParticles(view, themeColor);
-        setTimeout(() => triggerTowerTextParticles(view, themeColor), 100);
+        triggerEpicAscendAnimation(floor, themeColor);
     }
     
     view.classList.remove('hidden');
@@ -306,59 +349,85 @@ function getTowerColor(floor) {
     return colors[(floor - 1) % colors.length];
 }
 
-// Tower Partikel beim Aufstieg
-function initTowerParticles(container, color) {
-    const particleCount = 40;
-    for (let i = 0; i < particleCount; i++) {
-        setTimeout(() => {
-            const particle = document.createElement('div');
-            particle.className = 'tower-particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.bottom = '0px';
-            particle.style.color = color;
-            container.appendChild(particle);
-            const targetY = -(Math.random() * 400 + 100);
-            const duration = 1500 + Math.random() * 1000;
-            const delay = Math.random() * 500;
-            animateTowerParticle(particle, targetY, duration, delay);
-        }, i * 30);
+// ==========================================
+// EPIC FULLSCREEN ASCEND ANIMATION
+// ==========================================
+function triggerEpicAscendAnimation(floor, color) {
+    // Fullscreen Overlay erstellen
+    const overlay = document.createElement('div');
+    overlay.className = 'ascend-overlay';
+    overlay.innerHTML = `
+        <div class="ascend-content">
+            <div class="ascend-icon">⬆</div>
+            <div class="ascend-title">AUFSTIEG</div>
+            <div class="ascend-floor" style="color: ${color}">EBENE ${floor}</div>
+            <div class="ascend-subtitle">Bereit für neue Herausforderungen</div>
+        </div>
+        <div class="ascend-particles"></div>
+        <div class="ascend-rings"></div>
+        <div class="ascend-flash"></div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Partikel erstellen
+    const particleContainer = overlay.querySelector('.ascend-particles');
+    createAscendParticles(particleContainer, color, 60);
+    
+    // Ringe erstellen
+    const ringsContainer = overlay.querySelector('.ascend-rings');
+    createAscendRings(ringsContainer, color);
+    
+    // Flash Effekt
+    const flash = overlay.querySelector('.ascend-flash');
+    flash.style.background = color;
+    
+    // Animation starten
+    requestAnimationFrame(() => {
+        overlay.classList.add('active');
+    });
+    
+    // Nach 2.5 Sekunden ausblenden
+    setTimeout(() => {
+        overlay.classList.add('fade-out');
+        setTimeout(() => overlay.remove(), 500);
+    }, 2500);
+}
+
+function createAscendParticles(container, color, count) {
+    for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'ascend-particle';
+        
+        // Zufällige Position am unteren Rand
+        const startX = Math.random() * 100;
+        const size = 4 + Math.random() * 8;
+        const duration = 1.5 + Math.random() * 1.5;
+        const delay = Math.random() * 0.8;
+        
+        particle.style.cssText = `
+            left: ${startX}%;
+            width: ${size}px;
+            height: ${size}px;
+            background: ${color};
+            box-shadow: 0 0 ${size * 2}px ${color};
+            animation-duration: ${duration}s;
+            animation-delay: ${delay}s;
+        `;
+        
+        container.appendChild(particle);
     }
 }
 
-function animateTowerParticle(particle, targetY, duration, delay) {
-    setTimeout(() => {
-        const startTime = performance.now();
-        const startY = 0;
-        const startOpacity = 1;
-        function update(currentTime) {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            const currentY = startY + (targetY * eased);
-            const currentOpacity = startOpacity * (1 - progress);
-            particle.style.transform = `translateY(${currentY}px)`;
-            particle.style.opacity = currentOpacity;
-            if (progress < 1) requestAnimationFrame(update); 
-            else particle.remove();
-        }
-        requestAnimationFrame(update);
-    }, delay);
-}
-
-function triggerTowerTextParticles(container, color) {
-    const levelText = document.getElementById('towerLevelText');
-    if (!levelText) return;
-    
-    const rect = levelText.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    const textParticle = document.createElement('div');
-    textParticle.className = 'tower-text-particle';
-    textParticle.innerText = '⬆ LEVEL UP';
-    textParticle.style.left = (rect.left - containerRect.left + rect.width/2 - 60) + 'px';
-    textParticle.style.top = (rect.top - containerRect.top - 30) + 'px';
-    textParticle.style.color = color;
-    container.appendChild(textParticle);
-    setTimeout(() => textParticle.remove(), 2000);
+function createAscendRings(container, color) {
+    for (let i = 0; i < 3; i++) {
+        const ring = document.createElement('div');
+        ring.className = 'ascend-ring';
+        ring.style.cssText = `
+            border-color: ${color};
+            animation-delay: ${i * 0.3}s;
+        `;
+        container.appendChild(ring);
+    }
 }
 
 export function switchMainTab(tab) {

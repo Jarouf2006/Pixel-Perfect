@@ -117,20 +117,82 @@ export function renderGame(ctx, gameState) {
     ctx.closePath();
 
     if (isBlueprint) {
+        // Blueprint: Nur Eckpunkte, keine Füllung
         ctx.fillStyle = '#fff';
         for (let i = 0; i < vertices.length; i++) {
             ctx.beginPath(); ctx.arc(vertices[i].x, vertices[i].y, 4, 0, Math.PI*2); ctx.fill();
         }
     } else if (isBlitz && blitzPhase === 'flash' && !result) {
+        // Blitz Flash: Weiße Umrisse
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
         ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill();
     } else {
+        // Farben basierend auf Modus (passend zu Header-Farben)
         let grad = ctx.createLinearGradient(-100, -100, 100, 100);
-        // Farblogik (kurz gehalten)
-        if (mode === 'turnier') { grad.addColorStop(0, '#f59e0b'); grad.addColorStop(1, '#ef4444'); }
-        else if (settings.cursor === 'magnet') { grad.addColorStop(0, '#fdba74'); grad.addColorStop(1, '#ea580c'); }
-        else if (settings.special === 'glitch') { grad.addColorStop(0, '#e879f9'); grad.addColorStop(1, '#9333ea'); }
-        else { grad.addColorStop(0, '#3b82f6'); grad.addColorStop(1, '#10b981'); }
+        
+        if (mode === 'normal') {
+            // Normal: Blau -> Grün
+            grad.addColorStop(0, '#60a5fa');
+            grad.addColorStop(1, '#34d399');
+        }
+        else if (mode === 'turnier') {
+            // Turnier: Rot -> Orange
+            grad.addColorStop(0, '#ef4444');
+            grad.addColorStop(1, '#f59e0b');
+        }
+        else if (mode === 'hunter' || settings.movement === 'hunter') {
+            // Hunter: Cyan
+            grad.addColorStop(0, '#06b6d4');
+            grad.addColorStop(1, '#22d3ee');
+        }
+        else if (mode === 'pulsar' || settings.special === 'pulsar') {
+            // Pulsar: Pink/Magenta
+            grad.addColorStop(0, '#d946ef');
+            grad.addColorStop(1, '#e879f9');
+        }
+        else if (mode === 'spotlight' || settings.style === 'spotlight') {
+            // Spotlight: Grau/Slate
+            grad.addColorStop(0, '#64748b');
+            grad.addColorStop(1, '#94a3b8');
+        }
+        else if (mode === 'magnet' || settings.cursor === 'magnet') {
+            // Magnet: Orange
+            grad.addColorStop(0, '#f97316');
+            grad.addColorStop(1, '#fb923c');
+        }
+        else if (mode === 'glitch' || settings.special === 'glitch') {
+            // Glitch: Lila
+            grad.addColorStop(0, '#a855f7');
+            grad.addColorStop(1, '#c084fc');
+        }
+        else if (mode === 'mirage' || settings.special === 'mirage') {
+            // Mirage: Teal
+            grad.addColorStop(0, '#14b8a6');
+            grad.addColorStop(1, '#2dd4bf');
+        }
+        else if (mode === 'mirror' || settings.cursor === 'mirror') {
+            // Mirror: Silber/Hellgrau
+            grad.addColorStop(0, '#94a3b8');
+            grad.addColorStop(1, '#cbd5e1');
+        }
+        else if (mode === 'custom') {
+            // Custom: Violett
+            grad.addColorStop(0, '#8b5cf6');
+            grad.addColorStop(1, '#a78bfa');
+        }
+        else if (mode === 'tower') {
+            // Tower: Verwendet die Farbe basierend auf Floor
+            const towerColor = gameState.towerColor || '#3b82f6';
+            // Hellere Version für Gradient
+            grad.addColorStop(0, towerColor);
+            grad.addColorStop(1, lightenColor(towerColor, 30));
+        }
+        else {
+            // Default: Blau -> Grün
+            grad.addColorStop(0, '#3b82f6');
+            grad.addColorStop(1, '#10b981');
+        }
+        
         ctx.fillStyle = grad;
         
         if (!isBlueprint) {
@@ -157,26 +219,54 @@ export function renderGame(ctx, gameState) {
 
     // 8. ERGEBNIS MARKER
     if (result) {
+        // Bestimme Formfarbe für Kontrast
+        let shapeColor = '#3b82f6'; // Default
+        if (mode === 'tower') shapeColor = gameState.towerColor || '#3b82f6';
+        else if (mode === 'turnier') shapeColor = '#ef4444';
+        else if (mode === 'hunter' || settings.movement === 'hunter') shapeColor = '#06b6d4';
+        else if (mode === 'pulsar' || settings.special === 'pulsar') shapeColor = '#d946ef';
+        else if (mode === 'magnet' || settings.cursor === 'magnet') shapeColor = '#f97316';
+        else if (mode === 'glitch' || settings.special === 'glitch') shapeColor = '#a855f7';
+        else if (mode === 'mirage' || settings.special === 'mirage') shapeColor = '#14b8a6';
+        else if (mode === 'mirror' || settings.cursor === 'mirror') shapeColor = '#94a3b8';
+        else if (mode === 'spotlight' || settings.style === 'spotlight') shapeColor = '#64748b';
+        
+        // Kontrastfarbe für Click-Punkt (Grün wenn Form rötlich/lila, sonst Magenta)
+        const clickDotColor = getContrastDotColor(shapeColor);
+        // Target-Punkt ist immer Rot
+        const targetDotColor = '#ef4444';
+        
+        // Outline-Farbe basierend auf Helligkeit
+        const clickOutline = isColorDark(clickDotColor) ? '#ffffff' : '#000000';
+        const targetOutline = isColorDark(targetDotColor) ? '#ffffff' : '#000000';
+        
         // Linie
         ctx.beginPath(); 
         ctx.moveTo(result.clickX, result.clickY); 
         ctx.lineTo(result.targetX, result.targetY); 
         ctx.strokeStyle = '#fbbf24'; 
         ctx.setLineDash([5, 5]); 
+        ctx.lineWidth = 2;
         ctx.stroke(); 
         ctx.setLineDash([]);
         
-        // Target Dot (Echter Mittelpunkt)
+        // Target Dot (Echter Mittelpunkt) - mit Outline
         ctx.beginPath(); 
-        ctx.arc(result.targetX, result.targetY, 4, 0, Math.PI*2); 
-        ctx.fillStyle = '#ef4444'; 
+        ctx.arc(result.targetX, result.targetY, 4.5, 0, Math.PI*2); 
+        ctx.fillStyle = targetDotColor;
         ctx.fill();
+        ctx.strokeStyle = targetOutline;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
         
-        // Click Dot (Dein Klick)
+        // Click Dot (Dein Klick) - mit Outline
         ctx.beginPath(); 
-        ctx.arc(result.clickX, result.clickY, 4, 0, Math.PI*2); 
-        ctx.fillStyle = (settings.special === 'glitch') ? '#22c55e' : '#d946ef'; 
+        ctx.arc(result.clickX, result.clickY, 4.5, 0, Math.PI*2); 
+        ctx.fillStyle = clickDotColor;
         ctx.fill();
+        ctx.strokeStyle = clickOutline;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
         
         // Text Label
         const text = result.dist.toFixed(1) + "px";
@@ -197,4 +287,51 @@ export function renderGame(ctx, gameState) {
     }
 
     if (isSpotlight) ctx.restore();
+}
+
+// Helper: Hex-Farbe aufhellen
+function lightenColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, (num >> 16) + amt);
+    const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+    const B = Math.min(255, (num & 0x0000FF) + amt);
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+}
+
+// Helper: Prüfen ob Farbe dunkel ist
+function isColorDark(hex) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    // Luminanz-Formel
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.5;
+}
+
+// Helper: Kontrastfarbe für Click-Punkt basierend auf Formfarbe
+function getContrastDotColor(shapeColor) {
+    const num = parseInt(shapeColor.replace('#', ''), 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    
+    // Wenn Form rötlich/lila/orange ist -> Grün für Kontrast
+    // Wenn Form grünlich/cyan ist -> Magenta für Kontrast
+    // Wenn Form bläulich ist -> Grün für Kontrast
+    
+    const isReddish = r > 150 && r > g;
+    const isPurplish = r > 100 && b > 100 && g < 150;
+    const isOrangish = r > 200 && g > 100 && g < 200 && b < 100;
+    const isGreenish = g > r && g > b;
+    const isCyanish = g > 150 && b > 150 && r < 150;
+    
+    if (isReddish || isPurplish || isOrangish) {
+        return '#22c55e'; // Grün
+    } else if (isGreenish || isCyanish) {
+        return '#d946ef'; // Magenta
+    } else {
+        return '#22c55e'; // Default: Grün (gut sichtbar auf blau)
+    }
 }

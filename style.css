@@ -35,17 +35,28 @@ body {
 .main-container {
     width: 100%;
     max-width: 1100px;
-    min-height: 600px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     padding: 20px;
     position: relative;
+    /* Keine vertikale Zentrierung - von oben nach unten */
+    justify-content: flex-start;
+}
+
+/* Header-Bereich (Titel + Tabs) - fixe Höhe, kein Springen */
+.header-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 100%;
 }
 
 .view-wrapper {
     width: 100%;
+    /* Feste Höhe damit Content-Wechsel Header nicht bewegt */
+    min-height: 450px;
 }
 
 .content-area {
@@ -65,162 +76,472 @@ body {
 }
 
 /* =========================================
-   TOWER VIEW - gleiche Größe wie Modes
+   TOWER VIEW - Seamless wie Modi
    ========================================= */
 #viewTower {
+    display: grid;
+    grid-template-columns: 600px 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px 30px;
+    align-items: start;
+    width: 100%;
+    position: relative;
+}
+
+/* Linke Seite - Tower Main */
+.tower-main {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tower-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    /* Höhe wie descArea */
+    height: 95px;
+}
+
+.tower-icon {
+    font-size: 50px;
+    flex-shrink: 0;
+}
+
+.tower-info {
+    flex: 1;
+}
+
+.tower-floor {
+    font-size: 28px;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin: 0 0 5px 0;
+    font-style: italic;
+}
+
+.tower-record {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+/* Stats Grid - wie Mode Cards */
+.tower-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    /* Kleinere Höhe - passend zum Inhalt */
+    height: 120px;
+}
+
+.tower-stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    width: 100%;
-    min-height: 420px;
-    position: relative;
+    justify-content: center;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.tower-stat-card:hover {
+    border-color: #475569;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tower-stat-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.tower-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.tower-stat-value {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Rechte Seite - Sidebar (wie right-panel bei Modi) */
+.tower-sidebar {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tower-dangers {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 15px;
+    /* Gleiche Höhe wie tower-header / descArea */
+    height: 95px;
     overflow: hidden;
 }
 
-/* === TOWER ELEVATOR ANIMATIONS === */
-@keyframes towerElevatorBg {
-    0% { background-position: 0% 100%; opacity: 0; }
-    15% { opacity: 1; }
-    100% { background-position: 0% 0%; opacity: 1; }
+.tower-dangers-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: bold;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
 }
 
-@keyframes towerContentFade {
-    0% { opacity: 0; transform: translateY(40px) scale(0.95); }
-    60% { opacity: 0; transform: translateY(40px) scale(0.95); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
+.tower-dangers-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 13px;
 }
 
-@keyframes towerCardPop {
-    0% { transform: scale(0.8) rotateX(20deg); opacity: 0; }
-    60% { transform: scale(0.8) rotateX(20deg); opacity: 0; }
-    80% { transform: scale(1.05) rotateX(0deg); opacity: 1; }
-    100% { transform: scale(1) rotateX(0deg); opacity: 1; }
+.tower-dangers-list li {
+    padding: 3px 0;
 }
 
-@keyframes towerSlideLayer {
-    0% { transform: translateY(100%); opacity: 1; }
-    100% { transform: translateY(-100%); opacity: 0; }
+.tower-dangers-list li.inactive {
+    color: #475569;
 }
 
-@keyframes floatUpDisappear {
-    0% { transform: translateY(0) scale(1); opacity: 1; }
-    100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+.tower-reward {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 15px;
+    /* Gleiche Höhe wie tower-stats-grid */
+    height: 120px;
+    display: flex;
+    flex-direction: column;
 }
 
-.tower-animating-bg {
-    animation: towerElevatorBg 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.tower-reward-text {
+    font-size: 14px;
+    color: #e2e8f0;
+    margin-bottom: auto;
 }
 
-.tower-content-fade {
-    animation: towerContentFade 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.tower-warning {
+    font-size: 12px;
+    color: #ef4444;
+    padding: 10px 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 6px;
+    text-align: center;
 }
 
-.tower-card-anim {
-    animation: towerCardPop 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+.tower-hint {
+    font-size: 12px;
+    color: #34d399;
+    padding: 10px 12px;
+    background: rgba(52, 211, 153, 0.1);
+    border-radius: 6px;
+    text-align: center;
 }
 
-.tower-slide-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    animation: towerSlideLayer 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.tower-elevator-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    border-radius: 12px;
-}
-
-.tower-content {
-    position: relative;
-    z-index: 10;
-    width: 100%;
+/* Tower Buttons - wie buttons-panel */
+.tower-buttons {
+    grid-column: 1 / -1;
+    grid-row: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding-top: 20px;
+    gap: 10px;
+    margin-top: 10px;
     padding-bottom: 20px;
 }
 
-.tower-particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: #fff;
-    border-radius: 50%;
-    pointer-events: none;
-    box-shadow: 0 0 8px currentColor;
-    z-index: 100;
-}
-
-.tower-text-particle {
-    position: absolute;
-    font-size: 24px;
-    font-weight: bold;
-    pointer-events: none;
-    z-index: 150;
-    animation: floatUpDisappear 2s ease-out forwards;
-}
-
-.tower-card {
-    transition: background 0.5s, border-color 0.5s;
+.tower-buttons .btn {
+    min-width: 250px;
 }
 
 .tower-dev-btn {
     background: #475569 !important;
-    margin-top: 10px;
-    font-size: 14px !important;
-    padding: 10px !important;
+    font-size: 12px !important;
+    padding: 8px 15px !important;
     border: 1px dashed #94a3b8 !important;
+    min-width: auto !important;
+}
+
+/* === TOWER ANIMATIONS === */
+@keyframes towerContentFade {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes towerCardPop {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.tower-content-fade {
+    animation: towerContentFade 0.5s ease-out forwards;
+}
+
+.tower-card-anim {
+    animation: towerCardPop 0.4s ease-out forwards;
+}
+
+/* ==========================================
+   EPIC ASCEND ANIMATION
+   ========================================== */
+.ascend-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: background 0.3s ease;
+}
+
+.ascend-overlay.active {
+    background: rgba(15, 23, 42, 0.95);
+}
+
+.ascend-overlay.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+/* Content */
+.ascend-content {
+    text-align: center;
+    z-index: 10;
+    opacity: 0;
+    transform: scale(0.8) translateY(30px);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.ascend-overlay.active .ascend-content {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+.ascend-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: ascendIconPulse 0.8s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 30px currentColor);
+}
+
+@keyframes ascendIconPulse {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-15px) scale(1.1); }
+}
+
+.ascend-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #94a3b8;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+
+.ascend-floor {
+    font-size: 72px;
+    font-weight: 900;
+    font-style: italic;
+    text-shadow: 0 0 40px currentColor, 0 0 80px currentColor;
+    margin-bottom: 15px;
+    animation: ascendFloorGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes ascendFloorGlow {
+    0% { filter: brightness(1); }
+    100% { filter: brightness(1.3); }
+}
+
+.ascend-subtitle {
+    font-size: 16px;
+    color: #64748b;
+    opacity: 0;
+    animation: ascendSubtitleFade 0.5s ease 0.5s forwards;
+}
+
+@keyframes ascendSubtitleFade {
+    to { opacity: 1; }
+}
+
+/* Particles */
+.ascend-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.ascend-particle {
+    position: absolute;
+    bottom: -20px;
+    border-radius: 50%;
+    animation: ascendParticleRise 2s ease-out forwards;
+}
+
+@keyframes ascendParticleRise {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-120vh) scale(0.5);
+        opacity: 0;
+    }
+}
+
+/* Rings */
+.ascend-rings {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.ascend-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    border: 3px solid;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    animation: ascendRingExpand 1.5s ease-out forwards;
+}
+
+@keyframes ascendRingExpand {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(15);
+        opacity: 0;
+    }
+}
+
+/* Flash */
+.ascend-flash {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    animation: ascendFlash 0.6s ease-out 0.1s forwards;
+}
+
+@keyframes ascendFlash {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(100);
+        opacity: 0;
+    }
 }
 
 /* =========================================
-   GAME HUD (oben während Spiel)
+   GAME CONTAINER (während Spiel)
    ========================================= */
-.hud {
+.game-container {
     position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 30px 20px;
+    z-index: 50;
+    background: #0f172a;
+}
+
+.game-container.hidden {
+    display: none !important;
+}
+
+/* GAME HUD */
+.game-hud {
     display: flex;
     justify-content: space-between;
     width: 100%;
     max-width: 900px;
-    padding: 0 30px;
+    margin-bottom: 15px;
     font-family: monospace;
-    transition: opacity 0.3s;
-    z-index: 100;
-}
-
-.hud.invisible {
-    opacity: 0;
-    pointer-events: none;
+    padding: 15px 25px;
+    background: rgba(30, 41, 59, 0.95);
+    border-radius: 12px;
+    border: 1px solid #475569;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    min-height: 70px;
 }
 
 .hud-box {
+    flex: 1;
+}
+
+.hud-box:first-child {
+    text-align: left;
+}
+
+.hud-box:nth-child(2) {
     text-align: center;
 }
 
+.hud-box:last-child {
+    text-align: right;
+}
+
 .hud-label {
-    font-size: 10px;
+    font-size: 11px;
     text-transform: uppercase;
     color: #64748b;
     letter-spacing: 1px;
+    margin-bottom: 4px;
 }
 
 .hud-value {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
     color: #fff;
 }
@@ -231,39 +552,37 @@ body {
 
 .diff-badge {
     font-size: 10px;
-    padding: 2px 6px;
+    padding: 3px 10px;
     border-radius: 4px;
-    margin-left: 5px;
+    margin-left: 6px;
     vertical-align: middle;
-    background: rgba(255,255,255,0.1);
+    background: rgba(251, 191, 36, 0.2);
     color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
-/* =========================================
-   TIMER BAR
-   ========================================= */
-.timer-container {
-    position: fixed;
-    top: 70px;
-    left: 50%;
-    transform: translateX(-50%);
+/* GAME TIMER */
+.game-timer {
     width: 100%;
     max-width: 900px;
-    height: 6px;
-    background: #334155;
-    border-radius: 3px;
+    height: 20px;
+    background: #1e293b;
+    border-radius: 10px;
     overflow: hidden;
+    margin-bottom: 15px;
     opacity: 0;
     transition: opacity 0.3s;
-    z-index: 100;
+    border: 2px solid #334155;
 }
 
-.timer-bar {
+.game-timer-bar {
     height: 100%;
     width: 100%;
-    background: #ef4444;
+    background: linear-gradient(to right, #ef4444, #f59e0b);
     transform-origin: left;
     transition: transform 0.1s linear;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
 }
 
 /* =========================================
@@ -289,6 +608,23 @@ body {
     backdrop-filter: blur(8px);
 }
 
+#endScreen {
+    background-color: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* End Screen Card */
+.end-screen-card {
+    background: #1e293b;
+    padding: 40px 60px;
+    border-radius: 20px;
+    border: 1px solid #475569;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 400px;
+    width: 90%;
+}
+
 .popup-card {
     background: #1e293b;
     padding: 30px 50px;
@@ -301,6 +637,132 @@ body {
 @keyframes popIn {
     from { transform: scale(0.8); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
+}
+
+/* ==========================================
+   BURNING "PERFECT" IN TITLE
+   ========================================== */
+
+/* Title text container gets the gradient */
+.title-text {
+    background: linear-gradient(to right, #60a5fa, #34d399);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Perfect word - normally inherits from parent */
+.perfect-word {
+    position: relative;
+    -webkit-text-fill-color: transparent;
+    transition: filter 0.3s ease;
+}
+
+/* Fire effect when on-fire class is active */
+.perfect-word.on-fire {
+    background: linear-gradient(180deg, #fff 0%, #fca5a5 20%, #f87171 50%, #dc2626 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    animation: fireFlicker 0.15s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 8px #ef4444) drop-shadow(0 -5px 15px rgba(239, 68, 68, 0.6));
+}
+
+/* Streak Level 1 - Red fire */
+.perfect-word.on-fire[data-streak="1"] {
+    background: linear-gradient(180deg, #fff 0%, #fca5a5 20%, #f87171 50%, #dc2626 100%) !important;
+    filter: drop-shadow(0 0 8px #ef4444) drop-shadow(0 -5px 15px rgba(239, 68, 68, 0.6));
+}
+
+/* Streak Level 2 - Orange fire */
+.perfect-word.on-fire[data-streak="2"] {
+    background: linear-gradient(180deg, #fff 0%, #fed7aa 20%, #fb923c 50%, #ea580c 100%) !important;
+    filter: drop-shadow(0 0 10px #f97316) drop-shadow(0 -8px 20px rgba(249, 115, 22, 0.7));
+}
+
+/* Streak Level 3 - Yellow fire */
+.perfect-word.on-fire[data-streak="3"] {
+    background: linear-gradient(180deg, #fff 0%, #fef08a 15%, #fde047 40%, #eab308 100%) !important;
+    filter: drop-shadow(0 0 12px #eab308) drop-shadow(0 -10px 25px rgba(234, 179, 8, 0.8));
+    animation: fireFlicker 0.12s ease-in-out infinite alternate;
+}
+
+/* Streak Level 4 - White fire */
+.perfect-word.on-fire[data-streak="4"] {
+    background: linear-gradient(180deg, #fff 0%, #fff 25%, #fef3c7 50%, #fbbf24 100%) !important;
+    filter: drop-shadow(0 0 15px #fbbf24) drop-shadow(0 -12px 30px rgba(251, 191, 36, 0.9));
+    animation: fireFlicker 0.1s ease-in-out infinite alternate;
+}
+
+/* Streak Level 5+ - Blue fire (hottest!) */
+.perfect-word.on-fire[data-streak="5"] {
+    background: linear-gradient(180deg, #fff 0%, #e0f2fe 15%, #7dd3fc 40%, #0ea5e9 100%) !important;
+    filter: drop-shadow(0 0 20px #0ea5e9) drop-shadow(0 -15px 40px rgba(14, 165, 233, 1));
+    animation: fireFlicker 0.08s ease-in-out infinite alternate, fireGlow 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes fireFlicker {
+    0% { transform: translateX(-1px) scaleY(1); }
+    100% { transform: translateX(1px) scaleY(1.02); }
+}
+
+@keyframes fireGlow {
+    0% { filter: drop-shadow(0 0 20px #0ea5e9) drop-shadow(0 -15px 40px rgba(14, 165, 233, 1)); }
+    100% { filter: drop-shadow(0 0 30px #0ea5e9) drop-shadow(0 -20px 60px rgba(14, 165, 233, 1)) drop-shadow(0 0 80px rgba(14, 165, 233, 0.5)); }
+}
+
+/* Streak Badge next to title */
+.title-streak-badge {
+    position: absolute;
+    top: -10px;
+    right: -60px;
+    font-size: 20px;
+    font-weight: bold;
+    font-style: normal;
+    padding: 5px 12px;
+    border-radius: 20px;
+    animation: badgeAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    white-space: nowrap;
+}
+
+.title-streak-badge[data-streak="1"] {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
+}
+
+.title-streak-badge[data-streak="2"] {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.5);
+}
+
+.title-streak-badge[data-streak="3"] {
+    background: linear-gradient(135deg, #eab308, #ca8a04);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(234, 179, 8, 0.6);
+}
+
+.title-streak-badge[data-streak="4"] {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #1e293b;
+    box-shadow: 0 4px 25px rgba(251, 191, 36, 0.7);
+}
+
+.title-streak-badge[data-streak="5"] {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: #fff;
+    box-shadow: 0 4px 30px rgba(14, 165, 233, 0.8);
+    animation: badgeAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), badgePulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes badgeAppear {
+    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes badgePulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
 }
 
 .score-big {
@@ -365,10 +827,6 @@ body {
     margin-bottom: 30px;
     font-weight: 900;
     font-style: italic;
-    background: linear-gradient(to right, #60a5fa, #34d399);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
     filter: drop-shadow(0 0 20px var(--glow-color, rgba(52, 211, 153, 0.6)));
     text-align: center;
     cursor: pointer;
@@ -376,9 +834,17 @@ body {
     display: inline-block;
 }
 
-/* Shimmer nur für den Haupttitel im Menü */
-#mainTitle::after {
-    content: 'Pixel Perfect';
+/* Für Titel ohne spans (auth screens) - behalten den alten Gradient */
+.auth-screen .main-title {
+    background: linear-gradient(to right, #60a5fa, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Shimmer für alle main-title Elemente */
+.main-title::after {
+    content: attr(data-text);
     position: absolute;
     top: 0;
     left: 0;
@@ -396,6 +862,11 @@ body {
     background-clip: text;
     animation: shimmerOverlay 5s linear infinite;
     pointer-events: none;
+}
+
+/* Fallback für Titel ohne data-text */
+#mainTitle::after {
+    content: 'Pixel Perfect';
 }
 
 @keyframes shimmerOverlay {
@@ -453,6 +924,10 @@ body {
 .btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+}
+
+.btn-full {
+    width: 100%;
 }
 
 .btn-secondary {
@@ -677,13 +1152,32 @@ body {
     background: #1e293b;
     border: 2px solid #334155;
     color: white;
-    padding: 12px 14px;
+    padding: 12px 40px 12px 14px;
     border-radius: 8px;
     font-size: 14px;
     width: 100%;
     cursor: pointer;
     transition: border-color 0.2s;
     pointer-events: auto;
+}
+
+/* Dropdown Pfeil */
+.select-display::after {
+    content: '';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #64748b;
+    pointer-events: none;
+}
+
+.select-wrapper:hover .select-display::after {
+    border-top-color: #94a3b8;
 }
 
 .select-display:hover {
@@ -705,17 +1199,24 @@ body {
     background: #1e293b;
     border: 2px solid #334155;
     color: white;
-    padding: 12px 14px;
+    padding: 12px 40px 12px 14px;
     border-radius: 8px;
     font-size: 14px;
     width: 100%;
     cursor: pointer;
     outline: none;
     transition: border-color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
 }
 
 .edgeless-select:hover {
     border-color: #3b82f6;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
 }
 
 .edgeless-select:focus {
@@ -888,67 +1389,26 @@ input[type="checkbox"]:checked::before {
 /* =========================================
    CANVAS & GAME
    ========================================= */
-#gameCanvas {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: transparent;
-    cursor: default;
-    z-index: 1;
-    pointer-events: none;
+.canvas-wrapper {
+    position: relative;
+    width: 900px;
+    max-width: 100%;
 }
 
-#gameCanvas.ingame {
-    background: #0f172a;
-    border: 2px solid #1e293b;
-    border-radius: 4px;
+#gameCanvas {
+    display: block;
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     cursor: crosshair;
-    pointer-events: auto;
+    width: 100%;
+    height: auto;
+    touch-action: none;
 }
 
 #gameCanvas.hide-cursor {
     cursor: none;
-}
-
-/* =========================================
-   GAME HUD
-   ========================================= */
-#gameHud {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 30px;
-    align-items: center;
-    background: rgba(15, 23, 42, 0.9);
-    padding: 15px 30px;
-    border-radius: 10px;
-    border: 1px solid #334155;
-    z-index: 10;
-    transition: opacity 0.3s;
-}
-
-#scoreDisplay, #roundDisplay, #lastDistance {
-    font-size: 24px;
-    font-weight: bold;
-    color: #3b82f6;
-}
-
-#timerContainer {
-    width: 200px;
-    height: 8px;
-    background: #1e293b;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-#timerBar {
-    height: 100%;
-    background: linear-gradient(to right, #ef4444, #f59e0b);
-    width: 100%;
-    transition: width 0.1s linear;
 }
 
 /* =========================================

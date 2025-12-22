@@ -9,31 +9,36 @@
 </head>
 <body>
 
-    <!-- TIMER BAR (über dem Canvas) -->
-    <div class="timer-container" id="timerContainer">
-        <div class="timer-bar" id="timerBar"></div>
+    <!-- GAME CONTAINER (nur sichtbar während Spiel) -->
+    <div id="gameContainer" class="game-container hidden">
+        <!-- HUD (Score, Runde, Modus) -->
+        <div class="game-hud" id="gameHud">
+            <div class="hud-box">
+                <div class="hud-label">Punkte</div>
+                <div class="hud-value highlight" id="scoreDisplay">0</div>
+            </div>
+            <div class="hud-box">
+                <div class="hud-label">Runde</div>
+                <div class="hud-value"><span id="roundDisplay">1</span>/5</div>
+            </div>
+            <div class="hud-box">
+                <div class="hud-label">Modus <span class="diff-badge" id="modeBadge">NORMAL</span></div>
+                <div class="hud-value" id="lastDistance">-</div>
+            </div>
+        </div>
+
+        <!-- TIMER BAR -->
+        <div class="game-timer" id="timerContainer">
+            <div class="game-timer-bar" id="timerBar"></div>
+        </div>
+
+        <!-- CANVAS WRAPPER -->
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="900" height="600"></canvas>
+        </div>
     </div>
 
-    <!-- GAME HUD (Score, Runde, Modus) -->
-    <div class="hud invisible" id="gameHud">
-        <div class="hud-box" style="text-align: left;">
-            <div class="hud-label">Punkte</div>
-            <div class="hud-value highlight" id="scoreDisplay">0</div>
-        </div>
-        <div class="hud-box">
-            <div class="hud-label">Runde</div>
-            <div class="hud-value"><span id="roundDisplay">1</span>/5</div>
-        </div>
-        <div class="hud-box" style="text-align: right;">
-            <div class="hud-label">Modus <span class="diff-badge" id="modeBadge">NORMAL</span></div>
-            <div class="hud-value" id="lastDistance">-</div>
-        </div>
-    </div>
-
-    <!-- GAME CANVAS -->
-    <canvas id="gameCanvas" width="900" height="600"></canvas>
-
-    <!-- ROUND RESULT POPUP -->
+    <!-- ROUND RESULT POPUP (außerhalb gameContainer für z-index) -->
     <div class="overlay hidden" id="nextOverlay">
         <div class="popup-card">
             <div class="hud-label" id="roundTitle" style="font-size: 14px; color: #94a3b8;">ERGEBNIS</div>
@@ -43,22 +48,24 @@
         </div>
     </div>
 
-    <!-- END SCREEN -->
+    <!-- END SCREEN (außerhalb gameContainer für z-index) -->
     <div class="overlay hidden" id="endScreen">
-        <h1 id="endTitle">Gut gemacht!</h1>
-        <p style="color: #94a3b8; margin-bottom: 10px;">Runde beendet</p>
-        <div class="score-big" id="finalScore">0</div>
-        <div style="width:100%; max-width: 300px; background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:20px;">
-            <div class="hud-label">Gesammelte XP</div>
-            <div id="earnedXp" style="font-size:24px; color:#34d399; font-weight:bold;">+0 XP</div>
+        <div class="end-screen-card">
+            <h1 id="endTitle" style="margin-top: 0;">Gut gemacht!</h1>
+            <p style="color: #94a3b8; margin-bottom: 10px;">Runde beendet</p>
+            <div class="score-big" id="finalScore">0</div>
+            <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:20px;">
+                <div class="hud-label">Gesammelte XP</div>
+                <div id="earnedXp" style="font-size:24px; color:#34d399; font-weight:bold;">+0 XP</div>
+            </div>
+            <button class="btn btn-full" onclick="backToMenu()">Zurück zum Menü</button>
         </div>
-        <button class="btn" onclick="backToMenu()">Zurück zum Menü</button>
     </div>
 
     <!-- INTRO OVERLAY (Gast / Login Auswahl) -->
     <div id="introOverlay" class="auth-screen hidden">
         <div class="auth-container">
-            <h1 class="main-title">Pixel Perfect</h1>
+            <h1 class="main-title" data-text="Pixel Perfect">Pixel Perfect</h1>
             <button id="btn-guest" class="btn">Gast</button>
             <button id="btn-login" class="btn" onclick="chooseLogin()">Login</button>
         </div>
@@ -67,7 +74,7 @@
     <!-- AUTH OVERLAY (Name eingeben) -->
     <div id="authOverlay" class="auth-screen hidden">
         <div class="auth-container">
-            <h1 class="main-title">Gast Zugang</h1>
+            <h1 class="main-title" data-text="Gast Zugang">Gast Zugang</h1>
             <p class="instruction-text">Wie sollen wir dich nennen?</p>
             <input type="text" id="guest-name" class="input-name" placeholder="Dein Spielername" maxlength="12" autocomplete="off">
 
@@ -80,7 +87,19 @@
 
     <!-- DASHBOARD / START SCREEN (Hauptmenü nach Login) -->
     <div id="startScreen" class="main-container hidden">
-        <h1 class="main-title" id="mainTitle" onclick="titleClickEffect(event)">Pixel Perfect</h1>
+        
+        <!-- FIXED HEADER AREA -->
+        <div class="header-area">
+            <h1 class="main-title" id="mainTitle" onclick="titleClickEffect(event)">
+                <span class="title-text">Pixel <span id="perfectText" class="perfect-word">Perfect</span></span>
+            </h1>
+
+            <!-- NAVIGATION TABS -->
+            <div class="tab-nav">
+                <button id="navModi" class="tab-btn active" onclick="switchMainTab('modes')">Modi</button>
+                <button id="navTower" class="tab-btn" onclick="switchMainTab('tower')">🗼 Tower</button>
+            </div>
+        </div>
 
         <!-- ARC PROFILE (oben rechts) - Arc Raiders Style -->
         <div class="arc-profile-container" onclick="triggerXPAnim()" ondblclick="devLevelUp()">
@@ -95,14 +114,8 @@
             <div class="xp-tooltip" id="xpTooltip">- XP bis Level 2</div>
         </div>
 
+        <!-- CONTENT AREA - Variable height -->
         <div class="view-wrapper">
-            
-            <!-- NAVIGATION TABS -->
-            <div class="tab-nav">
-                <button id="navModi" class="tab-btn active" onclick="switchMainTab('modes')">Modi</button>
-                <button id="navTower" class="tab-btn" onclick="switchMainTab('tower')">🗼 Tower</button>
-            </div>
-
             <!-- MODES VIEW -->
             <div id="viewModes" class="content-area">
                 <div id="modesGrid"></div>
@@ -120,7 +133,6 @@
 
             <!-- TOWER VIEW -->
             <div id="viewTower" class="content-area hidden"></div>
-
         </div>
     </div>
 
