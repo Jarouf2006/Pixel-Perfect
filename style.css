@@ -640,119 +640,121 @@ body {
 }
 
 /* ==========================================
-   BURNING "PERFECT" IN TITLE
+   BURNING TITLE EFFECT
    ========================================== */
 
-/* Title text container gets the gradient */
-.title-text {
-    background: linear-gradient(to right, #60a5fa, #34d399);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* Perfect word - normally inherits from parent */
-.perfect-word {
+/* Title wrapper for positioning */
+.title-wrapper {
     position: relative;
-    -webkit-text-fill-color: transparent;
-    transition: filter 0.3s ease;
+    display: inline-block;
 }
 
-/* Fire effect when on-fire class is active */
-.perfect-word.on-fire {
-    background: linear-gradient(180deg, #fff 0%, #fca5a5 20%, #f87171 50%, #dc2626 100%) !important;
+/* Fire particles container */
+.fire-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: visible;
+    z-index: -1;
+}
+
+.fire-effect.hidden {
+    display: none;
+}
+
+/* Individual fire particle */
+.fire-particle {
+    position: absolute;
+    bottom: 20%;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: fireRise linear infinite;
+    opacity: 0;
+}
+
+@keyframes fireRise {
+    0% {
+        transform: translateY(0) scale(1) translateX(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-80px) scale(0.2) translateX(var(--drift, 0px));
+        opacity: 0;
+    }
+}
+
+/* When title is on fire - base styles */
+.main-title.on-fire {
+    animation: firePulse 0.3s ease-in-out infinite alternate;
+}
+
+/* Fire Level 1 - Red (Lithium/Strontium flame) */
+.main-title.fire-level-1 {
+    background: linear-gradient(180deg, #ffcdd2 0%, #ef5350 25%, #e53935 50%, #c62828 75%, #b71c1c 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
-    animation: fireFlicker 0.15s ease-in-out infinite alternate;
-    filter: drop-shadow(0 0 8px #ef4444) drop-shadow(0 -5px 15px rgba(239, 68, 68, 0.6));
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    filter: drop-shadow(0 0 10px rgba(229, 57, 53, 0.8)) drop-shadow(0 0 25px rgba(198, 40, 40, 0.5));
 }
 
-/* Streak Level 1 - Red fire */
-.perfect-word.on-fire[data-streak="1"] {
-    background: linear-gradient(180deg, #fff 0%, #fca5a5 20%, #f87171 50%, #dc2626 100%) !important;
-    filter: drop-shadow(0 0 8px #ef4444) drop-shadow(0 -5px 15px rgba(239, 68, 68, 0.6));
+/* Fire Level 2 - Orange (Calcium flame) */
+.main-title.fire-level-2 {
+    background: linear-gradient(180deg, #ffe0b2 0%, #ffb74d 25%, #ff9800 50%, #f57c00 75%, #e65100 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    filter: drop-shadow(0 0 12px rgba(255, 152, 0, 0.9)) drop-shadow(0 0 30px rgba(245, 124, 0, 0.6));
 }
 
-/* Streak Level 2 - Orange fire */
-.perfect-word.on-fire[data-streak="2"] {
-    background: linear-gradient(180deg, #fff 0%, #fed7aa 20%, #fb923c 50%, #ea580c 100%) !important;
-    filter: drop-shadow(0 0 10px #f97316) drop-shadow(0 -8px 20px rgba(249, 115, 22, 0.7));
+/* Fire Level 3 - Bright Green (Copper/Barium flame) */
+.main-title.fire-level-3 {
+    background: linear-gradient(180deg, #e8f5e9 0%, #a5d6a7 20%, #66bb6a 40%, #4caf50 65%, #43a047 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    filter: drop-shadow(0 0 15px rgba(102, 187, 106, 1)) drop-shadow(0 0 35px rgba(76, 175, 80, 0.8));
 }
 
-/* Streak Level 3 - Yellow fire */
-.perfect-word.on-fire[data-streak="3"] {
-    background: linear-gradient(180deg, #fff 0%, #fef08a 15%, #fde047 40%, #eab308 100%) !important;
-    filter: drop-shadow(0 0 12px #eab308) drop-shadow(0 -10px 25px rgba(234, 179, 8, 0.8));
-    animation: fireFlicker 0.12s ease-in-out infinite alternate;
+/* Fire Level 4 - Bright Violet/Purple (Potassium flame) */
+.main-title.fire-level-4 {
+    background: linear-gradient(180deg, #f3e5f5 0%, #ce93d8 20%, #ab47bc 40%, #9c27b0 65%, #8e24aa 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    filter: drop-shadow(0 0 18px rgba(171, 71, 188, 1)) drop-shadow(0 0 40px rgba(156, 39, 176, 0.8));
 }
 
-/* Streak Level 4 - White fire */
-.perfect-word.on-fire[data-streak="4"] {
-    background: linear-gradient(180deg, #fff 0%, #fff 25%, #fef3c7 50%, #fbbf24 100%) !important;
-    filter: drop-shadow(0 0 15px #fbbf24) drop-shadow(0 -12px 30px rgba(251, 191, 36, 0.9));
-    animation: fireFlicker 0.1s ease-in-out infinite alternate;
+/* Fire Level 5 - Bright Blue (Copper Chloride - hottest) */
+.main-title.fire-level-5 {
+    background: linear-gradient(180deg, #e3f2fd 0%, #90caf9 20%, #42a5f5 40%, #2196f3 65%, #1e88e5 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    filter: drop-shadow(0 0 20px rgba(66, 165, 245, 1)) drop-shadow(0 0 45px rgba(33, 150, 243, 0.9));
 }
 
-/* Streak Level 5+ - Blue fire (hottest!) */
-.perfect-word.on-fire[data-streak="5"] {
-    background: linear-gradient(180deg, #fff 0%, #e0f2fe 15%, #7dd3fc 40%, #0ea5e9 100%) !important;
-    filter: drop-shadow(0 0 20px #0ea5e9) drop-shadow(0 -15px 40px rgba(14, 165, 233, 1));
-    animation: fireFlicker 0.08s ease-in-out infinite alternate, fireGlow 0.5s ease-in-out infinite alternate;
+@keyframes firePulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.015); }
 }
 
 @keyframes fireFlicker {
     0% { transform: translateX(-1px) scaleY(1); }
     100% { transform: translateX(1px) scaleY(1.02); }
-}
-
-@keyframes fireGlow {
-    0% { filter: drop-shadow(0 0 20px #0ea5e9) drop-shadow(0 -15px 40px rgba(14, 165, 233, 1)); }
-    100% { filter: drop-shadow(0 0 30px #0ea5e9) drop-shadow(0 -20px 60px rgba(14, 165, 233, 1)) drop-shadow(0 0 80px rgba(14, 165, 233, 0.5)); }
-}
-
-/* Streak Badge next to title */
-.title-streak-badge {
-    position: absolute;
-    top: -10px;
-    right: -60px;
-    font-size: 20px;
-    font-weight: bold;
-    font-style: normal;
-    padding: 5px 12px;
-    border-radius: 20px;
-    animation: badgeAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    white-space: nowrap;
-}
-
-.title-streak-badge[data-streak="1"] {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff;
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
-}
-
-.title-streak-badge[data-streak="2"] {
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    color: #fff;
-    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.5);
-}
-
-.title-streak-badge[data-streak="3"] {
-    background: linear-gradient(135deg, #eab308, #ca8a04);
-    color: #fff;
-    box-shadow: 0 4px 20px rgba(234, 179, 8, 0.6);
-}
-
-.title-streak-badge[data-streak="4"] {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #1e293b;
-    box-shadow: 0 4px 25px rgba(251, 191, 36, 0.7);
-}
-
-.title-streak-badge[data-streak="5"] {
-    background: linear-gradient(135deg, #0ea5e9, #0284c7);
-    color: #fff;
-    box-shadow: 0 4px 30px rgba(14, 165, 233, 0.8);
-    animation: badgeAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), badgePulse 0.8s ease-in-out infinite alternate;
 }
 
 @keyframes badgeAppear {
@@ -862,6 +864,11 @@ body {
     background-clip: text;
     animation: shimmerOverlay 5s linear infinite;
     pointer-events: none;
+}
+
+/* Disable shimmer when on fire */
+.main-title.on-fire::after {
+    display: none;
 }
 
 /* Fallback für Titel ohne data-text */

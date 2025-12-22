@@ -44,5 +44,5 @@ export function deleteUser() {
 }
 
 export function createDefaultUser(name) {
-    return { name: name, xp: 0, level: 1, towerMax: 1 };
+    return { name: name, xp: 0, level: 1, towerMax: 1, perfectStreak: 0 };
 }

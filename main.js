@@ -40,12 +40,24 @@ let state = {
     currentSettings: {}, input: setupInput(canvas), startTime: 0, result: null,
     frozen: false, frozenTime: 0, lastDistance: null,
     // Perfect Streak Tracking
-    perfectStreak: 0, perfectThisRound: false, roundPerfectCount: 0
+    perfectStreak: 0, perfectThisRound: false, roundPerfectCount: 0,
+    // Track if ANY perfect was hit in the current game
+    hadPerfectInGame: false, maxStreakInGame: 0
 };
 
 // --- INIT ---
 function initApp() {
     state.user = API.loadUser();
+    
+    // Load perfectStreak from user (falls vorhanden)
+    if (state.user && state.user.perfectStreak !== undefined) {
+        state.perfectStreak = state.user.perfectStreak;
+        console.log('Loaded perfectStreak from user:', state.perfectStreak);
+    } else if (state.user) {
+        // User exists but has no perfectStreak - initialize it
+        state.user.perfectStreak = state.perfectStreak || 0;
+        console.log('Initialized perfectStreak for user:', state.perfectStreak);
+    }
     
     // UI Reset - WICHTIG: gameHud auch mit display:none verstecken
     ['endScreen', 'nextOverlay', 'startScreen', 'authOverlay', 'introOverlay'].forEach(id => {
@@ -66,6 +78,15 @@ function initApp() {
         MenuUI.buildModeGrid(state.user.level, LEVELS, state.mode, setMode);
         setMode(state.mode === 'tower' ? 'normal' : state.mode);
         MenuUI.switchMainTab('modes');
+        
+        // Show fire effect if streak > 0 - AFTER setMode so it doesn't get overwritten
+        if (state.perfectStreak > 0) {
+            console.log('Applying fire effect with streak:', state.perfectStreak);
+            // Small delay to ensure DOM is ready, but setMode already ran
+            setTimeout(() => {
+                LeaderboardUI.updateBurningTitle(state.perfectStreak);
+            }, 50);
+        }
     } else {
         document.getElementById('introOverlay').classList.remove('hidden');
         setupAuthListeners();
@@ -162,16 +183,49 @@ window.titleClickEffect = (event) => {
     void title.offsetWidth;
     title.classList.add('title-pop');
     
-    // Get current glow color for particles
-    const glowColor = getComputedStyle(title).getPropertyValue('--glow-color') || 'rgba(52, 211, 153, 0.8)';
+    // Determine particle color based on fire state or current mode
+    let particleColor;
+    const isOnFire = title.classList.contains('on-fire');
+    const streakLevel = parseInt(title.getAttribute('data-streak')) || 0;
+    
+    if (isOnFire && streakLevel > 0) {
+        // Fire colors based on streak level (matching metal flames)
+        const fireColors = {
+            1: '#ef5350',  // Red (Lithium)
+            2: '#ff9800',  // Orange (Calcium)
+            3: '#66bb6a',  // Green (Copper)
+            4: '#ab47bc',  // Violet (Potassium)
+            5: '#42a5f5'   // Blue (Copper Chloride)
+        };
+        particleColor = fireColors[streakLevel] || fireColors[1];
+    } else {
+        // Mode-specific colors (matching the gradient end colors)
+        const modeColors = {
+            'normal': '#60a5fa',     // Blue
+            'turnier': '#f59e0b',    // Orange/Amber
+            'blitz': '#fbbf24',      // Yellow
+            'hunter': '#22d3ee',     // Cyan
+            'pulsar': '#e879f9',     // Pink
+            'blueprint': '#60a5fa',  // Blue
+            'spotlight': '#94a3b8',  // Gray
+            'magnet': '#fb923c',     // Orange
+            'glitch': '#c084fc',     // Purple
+            'mirage': '#2dd4bf',     // Teal
+            'mirror': '#cbd5e1',     // Light Gray
+            'custom': '#a78bfa',     // Violet
+            'tower': '#3b82f6'       // Blue (default tower)
+        };
+        particleColor = modeColors[state.mode] || '#60a5fa';
+    }
+    
     const rect = title.getBoundingClientRect();
     
     // Spawn particles from click position
     for (let i = 0; i < 12; i++) {
         const particle = document.createElement('div');
         particle.className = 'title-particle';
-        particle.style.background = glowColor.replace('0.6', '1');
-        particle.style.boxShadow = `0 0 6px ${glowColor}, 0 0 10px ${glowColor}`;
+        particle.style.background = particleColor;
+        particle.style.boxShadow = `0 0 6px ${particleColor}, 0 0 10px ${particleColor}`;
         particle.style.left = (event.clientX - rect.left) + 'px';
         particle.style.top = (event.clientY - rect.top) + 'px';
         title.appendChild(particle);
@@ -204,14 +258,30 @@ window.titleClickEffect = (event) => {
 window.backToMenu = () => {
     const wasInTower = state.mode === 'tower';
     
+    // Streak-Logik: Wenn dieses Spiel mindestens einen Perfect hatte, Streak erhöhen
+    // Sonst Streak zurücksetzen
+    if (state.hadPerfectInGame) {
+        state.perfectStreak++;
+        console.log('Game had perfect! Streak increased to:', state.perfectStreak);
+    } else {
+        state.perfectStreak = 0;
+        console.log('No perfect in game. Streak reset to 0');
+    }
+    
+    // Save streak to user object
+    if (state.user) {
+        state.user.perfectStreak = state.perfectStreak;
+        API.saveUser(state.user);
+    }
+    
+    const fireStreak = state.perfectStreak;
+    console.log('backToMenu - fireStreak:', fireStreak);
+    
     state.isRunning = false; state.vertices = []; state.result = null; state.input.clicked = false;
     canvas.classList.remove('hide-cursor');
     
     // WICHTIG: Kasten-Look entfernen (wieder Edgeless machen)
     canvas.classList.remove('ingame');
-    
-    // Burning Title zurücksetzen
-    LeaderboardUI.resetBurningTitle();
     
     // Game Container verstecken
     const gameContainer = document.getElementById('gameContainer');
@@ -290,14 +360,16 @@ window.devSkipLevel = () => {
 };
 
 window.nextRound = () => { 
-    // Streak-Logik: Wenn diese Runde mindestens ein Perfect hatte, Streak erhöhen, sonst zurücksetzen
-    if (state.perfectThisRound) {
-        state.perfectStreak++;
-    } else {
-        state.perfectStreak = 0;
-        // Feuer im Titel löschen wenn Streak bricht
+    console.log('nextRound called - perfectThisRound:', state.perfectThisRound, 'maxStreakInGame:', state.maxStreakInGame);
+    
+    // If no perfect this round, reset the in-game streak and title
+    if (!state.perfectThisRound) {
+        state.maxStreakInGame = 0;
+        // Reset burning title during game if streak breaks
         LeaderboardUI.resetBurningTitle();
+        console.log('Round had no perfect, maxStreakInGame reset');
     }
+    
     // Reset für nächste Runde
     state.perfectThisRound = false;
     state.roundPerfectCount = 0;
@@ -307,6 +379,7 @@ window.nextRound = () => {
         updateHUD(); 
         startRound(); 
     } else { 
+        console.log('Last round - calling endGame, hadPerfectInGame:', state.hadPerfectInGame);
         endGame(); 
     } 
 };
@@ -339,8 +412,11 @@ window.startGame = () => {
     canvas.classList.add('ingame');
 
     state.score = 0; state.round = 1; state.lastDistance = null;
-    // Reset Perfect Streak
-    state.perfectStreak = 0; state.perfectThisRound = false; state.roundPerfectCount = 0;
+    // Reset nur die Runden-spezifischen Werte, NICHT die globale Streak
+    state.perfectThisRound = false; state.roundPerfectCount = 0;
+    state.hadPerfectInGame = false; state.maxStreakInGame = 0;
+    // perfectStreak bleibt erhalten - wird nur in backToMenu zurückgesetzt wenn kein Perfect im Spiel
+    LeaderboardUI.resetBurningTitle();
     
     document.getElementById('startScreen').classList.add('hidden');
     
@@ -480,6 +556,57 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+// Keyboard shortcuts for game
+document.addEventListener('keydown', (e) => {
+    // Skip popups with Enter or Space
+    if (e.key === 'Enter' || e.key === ' ') {
+        // Check if round result popup is visible
+        const nextOverlay = document.getElementById('nextOverlay');
+        if (nextOverlay && !nextOverlay.classList.contains('hidden')) {
+            e.preventDefault();
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) nextBtn.click();
+            return;
+        }
+        
+        // Check if end screen is visible
+        const endScreen = document.getElementById('endScreen');
+        if (endScreen && !endScreen.classList.contains('hidden')) {
+            e.preventDefault();
+            const backBtn = endScreen.querySelector('.btn');
+            if (backBtn) backBtn.click();
+            return;
+        }
+    }
+    
+    // DEV CHEAT: Enter key for perfect hit (only for Liam)
+    if (e.key === 'Enter' && state.user && state.user.name.toLowerCase() === 'liam') {
+        if (state.isRunning && state.waitingForClick && !state.frozen) {
+            const isBlitz = state.currentSettings.visibility === 'blitz';
+            if (!isBlitz || (isBlitz && state.blitzPhase === 'input')) {
+                // FREEZE
+                state.frozen = true;
+                state.frozenTime = Date.now();
+                
+                // Calculate perfect target position
+                const centroid = getCentroid(state.vertices);
+                const wCos = Math.cos(state.rotation);
+                const wSin = Math.sin(state.rotation);
+                const targetX = state.centerPos.x + (centroid.x * wCos - centroid.y * wSin);
+                const targetY = state.centerPos.y + (centroid.x * wSin + centroid.y * wCos);
+                
+                // Set input position to perfect spot
+                state.input.deflectedX = targetX;
+                state.input.deflectedY = targetY;
+                
+                // Perfect hit = 0 distance
+                handleRoundEnd(0, targetX, targetY);
+                console.log('🎯 DEV CHEAT: Perfect hit!');
+            }
+        }
+    }
+});
+
 function calculateHit(input, center, rotation, vertices) {
     const centroid = getCentroid(vertices);
     const dx = input.deflectedX - center.x;
@@ -503,11 +630,16 @@ function handleRoundEnd(dist, tx = 0, ty = 0) {
     
     // Perfect Streak Tracking (Perfekt = dist < 4px)
     const isPerfect = dist < 4;
+    console.log('handleRoundEnd - dist:', dist, 'isPerfect:', isPerfect);
+    
     if (isPerfect) {
         state.perfectThisRound = true;
         state.roundPerfectCount++;
-        // Sofort das Feuer aktivieren! Die Streak wird die Intensität später erhöhen
-        LeaderboardUI.updateBurningTitle(state.perfectStreak + 1);
+        state.hadPerfectInGame = true; // Track that we hit at least one perfect
+        state.maxStreakInGame++; // Increment the in-game streak counter
+        console.log('PERFECT HIT! hadPerfectInGame:', state.hadPerfectInGame, 'maxStreakInGame:', state.maxStreakInGame);
+        // Sofort das Feuer aktivieren mit der aktuellen Spiel-Streak + globale Streak
+        LeaderboardUI.updateBurningTitle(state.perfectStreak + state.maxStreakInGame);
     }
     
     updateHUD(dist < 900 ? dist : null);

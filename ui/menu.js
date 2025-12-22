@@ -146,8 +146,14 @@ export function updateSettingsUI(mode, blitzExtreme) {
     }
     
     if (title) {
-        // Get the title-text span (contains the gradient)
-        const titleText = title.querySelector('.title-text');
+        // Skip title update if fire effect is active
+        if (title.classList.contains('on-fire')) {
+            return;
+        }
+        
+        // Reset styles
+        title.style.background = ""; 
+        title.style.webkitTextFillColor = ""; 
         
         let grad = "";
         let glowColor = "rgba(52, 211, 153, 0.6)"; // Default grün
@@ -203,17 +209,9 @@ export function updateSettingsUI(mode, blitzExtreme) {
         }
         
         if (grad) {
-            // Apply to title-text span if it exists
-            if (titleText) {
-                titleText.style.background = grad;
-                titleText.style.webkitBackgroundClip = "text";
-                titleText.style.webkitTextFillColor = "transparent";
-            } else {
-                // Fallback for auth screens without spans
-                title.style.background = grad;
-                title.style.webkitBackgroundClip = "text"; 
-                title.style.webkitTextFillColor = "transparent";
-            }
+            title.style.background = grad;
+            title.style.webkitBackgroundClip = "text"; 
+            title.style.webkitTextFillColor = "transparent";
             title.style.setProperty('--glow-color', glowColor);
         }
     }
@@ -224,22 +222,17 @@ export function updateTitleForTower(themeColor) {
     const title = document.getElementById('mainTitle');
     if (!title) return;
     
-    const titleText = title.querySelector('.title-text');
+    // Skip if fire effect is active
+    if (title.classList.contains('on-fire')) {
+        return;
+    }
     
     // Hellere Version der Farbe für Gradient
     const lighterColor = themeColor + 'cc'; // etwas transparenter
-    const grad = `linear-gradient(to right, ${themeColor}, ${lighterColor})`;
     
-    if (titleText) {
-        titleText.style.background = grad;
-        titleText.style.webkitBackgroundClip = "text";
-        titleText.style.webkitTextFillColor = "transparent";
-    } else {
-        title.style.background = grad;
-        title.style.webkitBackgroundClip = "text"; 
-        title.style.webkitTextFillColor = "transparent";
-    }
-    
+    title.style.background = `linear-gradient(to right, ${themeColor}, ${lighterColor})`;
+    title.style.webkitBackgroundClip = "text"; 
+    title.style.webkitTextFillColor = "transparent";
     title.style.setProperty('--glow-color', hexToRgba(themeColor, 0.6));
 }
 
