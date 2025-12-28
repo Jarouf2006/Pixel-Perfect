@@ -101,7 +101,10 @@ export function renderGame(ctx, gameState) {
         ctx.scale(scale, scale);
     }
     
-    if (isGlitch) {
+    // Glitch-Effekt nur wenn nicht geklickt wurde (kein result und nicht frozen)
+    const glitchActive = isGlitch && !result && !gameState.frozen;
+    
+    if (glitchActive) {
         ctx.translate((Math.random()-0.5)*10, (Math.random()-0.5)*10);
     }
     
@@ -111,7 +114,7 @@ export function renderGame(ctx, gameState) {
     for (let i = 0; i < vertices.length; i++) {
         let v = vertices[i];
         let vx = v.x, vy = v.y;
-        if (isGlitch) { vx += (Math.random()-0.5)*15; vy += (Math.random()-0.5)*15; }
+        if (glitchActive) { vx += (Math.random()-0.5)*15; vy += (Math.random()-0.5)*15; }
         if (i===0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
     }
     ctx.closePath();
@@ -134,6 +137,18 @@ export function renderGame(ctx, gameState) {
             // Normal: Blau -> Grün
             grad.addColorStop(0, '#60a5fa');
             grad.addColorStop(1, '#34d399');
+        }
+        else if (mode === 'blitz' || settings.visibility === 'blitz') {
+            // Blitz: Gelb/Gold
+            if (blitzExtreme) {
+                // Extreme: Rot
+                grad.addColorStop(0, '#ef4444');
+                grad.addColorStop(1, '#f87171');
+            } else {
+                // Normal Blitz: Gelb
+                grad.addColorStop(0, '#f59e0b');
+                grad.addColorStop(1, '#fbbf24');
+            }
         }
         else if (mode === 'turnier') {
             // Turnier: Rot -> Orange

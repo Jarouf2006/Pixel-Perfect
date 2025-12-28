@@ -39,24 +39,18 @@ let state = {
     pulsarPhase: 0, miragePhase: 0, towerFloor: 1, towerTarget: 0, towerAscended: false, towerColor: '#3b82f6',
     currentSettings: {}, input: setupInput(canvas), startTime: 0, result: null,
     frozen: false, frozenTime: 0, lastDistance: null,
-    // Perfect Streak Tracking
-    perfectStreak: 0, perfectThisRound: false, roundPerfectCount: 0,
-    // Track if ANY perfect was hit in the current game
-    hadPerfectInGame: false, maxStreakInGame: 0
+    // Perfect Coins tracking (earned this game)
+    perfectCoinsThisGame: 0
 };
 
 // --- INIT ---
 function initApp() {
     state.user = API.loadUser();
     
-    // Load perfectStreak from user (falls vorhanden)
-    if (state.user && state.user.perfectStreak !== undefined) {
-        state.perfectStreak = state.user.perfectStreak;
-        console.log('Loaded perfectStreak from user:', state.perfectStreak);
-    } else if (state.user) {
-        // User exists but has no perfectStreak - initialize it
-        state.user.perfectStreak = state.perfectStreak || 0;
-        console.log('Initialized perfectStreak for user:', state.perfectStreak);
+    // Load perfectCoins from user (falls vorhanden)
+    if (state.user && state.user.perfectCoins === undefined) {
+        // User exists but has no perfectCoins - initialize it
+        state.user.perfectCoins = 0;
     }
     
     // UI Reset - WICHTIG: gameHud auch mit display:none verstecken
@@ -78,15 +72,6 @@ function initApp() {
         MenuUI.buildModeGrid(state.user.level, LEVELS, state.mode, setMode);
         setMode(state.mode === 'tower' ? 'normal' : state.mode);
         MenuUI.switchMainTab('modes');
-        
-        // Show fire effect if streak > 0 - AFTER setMode so it doesn't get overwritten
-        if (state.perfectStreak > 0) {
-            console.log('Applying fire effect with streak:', state.perfectStreak);
-            // Small delay to ensure DOM is ready, but setMode already ran
-            setTimeout(() => {
-                LeaderboardUI.updateBurningTitle(state.perfectStreak);
-            }, 50);
-        }
     } else {
         document.getElementById('introOverlay').classList.remove('hidden');
         setupAuthListeners();
@@ -183,40 +168,23 @@ window.titleClickEffect = (event) => {
     void title.offsetWidth;
     title.classList.add('title-pop');
     
-    // Determine particle color based on fire state or current mode
-    let particleColor;
-    const isOnFire = title.classList.contains('on-fire');
-    const streakLevel = parseInt(title.getAttribute('data-streak')) || 0;
-    
-    if (isOnFire && streakLevel > 0) {
-        // Fire colors based on streak level (matching metal flames)
-        const fireColors = {
-            1: '#ef5350',  // Red (Lithium)
-            2: '#ff9800',  // Orange (Calcium)
-            3: '#66bb6a',  // Green (Copper)
-            4: '#ab47bc',  // Violet (Potassium)
-            5: '#42a5f5'   // Blue (Copper Chloride)
-        };
-        particleColor = fireColors[streakLevel] || fireColors[1];
-    } else {
-        // Mode-specific colors (matching the gradient end colors)
-        const modeColors = {
-            'normal': '#60a5fa',     // Blue
-            'turnier': '#f59e0b',    // Orange/Amber
-            'blitz': '#fbbf24',      // Yellow
-            'hunter': '#22d3ee',     // Cyan
-            'pulsar': '#e879f9',     // Pink
-            'blueprint': '#60a5fa',  // Blue
-            'spotlight': '#94a3b8',  // Gray
-            'magnet': '#fb923c',     // Orange
-            'glitch': '#c084fc',     // Purple
-            'mirage': '#2dd4bf',     // Teal
-            'mirror': '#cbd5e1',     // Light Gray
-            'custom': '#a78bfa',     // Violet
-            'tower': '#3b82f6'       // Blue (default tower)
-        };
-        particleColor = modeColors[state.mode] || '#60a5fa';
-    }
+    // Mode-specific particle colors (matching the gradient end colors)
+    const modeColors = {
+        'normal': '#60a5fa',     // Blue
+        'turnier': '#f59e0b',    // Orange/Amber
+        'blitz': '#fbbf24',      // Yellow
+        'hunter': '#22d3ee',     // Cyan
+        'pulsar': '#e879f9',     // Pink
+        'blueprint': '#60a5fa',  // Blue
+        'spotlight': '#94a3b8',  // Gray
+        'magnet': '#fb923c',     // Orange
+        'glitch': '#c084fc',     // Purple
+        'mirage': '#2dd4bf',     // Teal
+        'mirror': '#cbd5e1',     // Light Gray
+        'custom': '#a78bfa',     // Violet
+        'tower': '#3b82f6'       // Blue (default tower)
+    };
+    const particleColor = modeColors[state.mode] || '#60a5fa';
     
     const rect = title.getBoundingClientRect();
     
@@ -255,27 +223,43 @@ window.titleClickEffect = (event) => {
     }
 };
 
+// Track if shimmer is currently animating
+let coinShimmerAnimating = false;
+
+window.coinClickEffect = (event) => {
+    const coinDisplay = document.getElementById('perfectCoinsDisplay');
+    if (!coinDisplay) return;
+    
+    event.stopPropagation(); // Prevent triggering parent clicks
+    
+    // Scale pop effect (like title)
+    coinDisplay.classList.remove('coin-pop');
+    void coinDisplay.offsetWidth; // Trigger reflow
+    coinDisplay.classList.add('coin-pop');
+    
+    // Trigger shimmer animation only if not already animating
+    if (!coinShimmerAnimating) {
+        coinShimmerAnimating = true;
+        coinDisplay.classList.add('shimmer-once');
+        
+        // Remove class and allow re-trigger after animation completes (600ms)
+        setTimeout(() => {
+            coinDisplay.classList.remove('shimmer-once');
+            coinShimmerAnimating = false;
+        }, 600);
+    }
+};
+
 window.backToMenu = () => {
     const wasInTower = state.mode === 'tower';
     
     // Streak-Logik: Wenn dieses Spiel mindestens einen Perfect hatte, Streak erhöhen
-    // Sonst Streak zurücksetzen
-    if (state.hadPerfectInGame) {
-        state.perfectStreak++;
-        console.log('Game had perfect! Streak increased to:', state.perfectStreak);
-    } else {
-        state.perfectStreak = 0;
-        console.log('No perfect in game. Streak reset to 0');
-    }
-    
-    // Save streak to user object
-    if (state.user) {
-        state.user.perfectStreak = state.perfectStreak;
+    // Save perfectCoins earned this game to user
+    if (state.user && state.perfectCoinsThisGame > 0) {
+        state.user.perfectCoins = (state.user.perfectCoins || 0) + state.perfectCoinsThisGame;
+        console.log('Earned', state.perfectCoinsThisGame, 'Perfect Coins! Total:', state.user.perfectCoins);
         API.saveUser(state.user);
     }
-    
-    const fireStreak = state.perfectStreak;
-    console.log('backToMenu - fireStreak:', fireStreak);
     
     state.isRunning = false; state.vertices = []; state.result = null; state.input.clicked = false;
     canvas.classList.remove('hide-cursor');
@@ -297,7 +281,7 @@ window.backToMenu = () => {
     }
     const timerContainer = document.getElementById('timerContainer');
     if (timerContainer) {
-        timerContainer.style.display = 'none';
+        timerContainer.classList.remove('active');
     }
     
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
@@ -325,6 +309,9 @@ window.switchMainTab = (tab) => {
         );
         // Titel Farbe an Tower-Ebene anpassen
         MenuUI.updateTitleForTower(themeColor);
+        
+        // Update coin display color to match tower
+        LobbyUI.updateCoinDisplayColor('tower', themeColor);
         
         state.towerAscended = false; // Reset nach Anzeige
         
@@ -360,26 +347,11 @@ window.devSkipLevel = () => {
 };
 
 window.nextRound = () => { 
-    console.log('nextRound called - perfectThisRound:', state.perfectThisRound, 'maxStreakInGame:', state.maxStreakInGame);
-    
-    // If no perfect this round, reset the in-game streak and title
-    if (!state.perfectThisRound) {
-        state.maxStreakInGame = 0;
-        // Reset burning title during game if streak breaks
-        LeaderboardUI.resetBurningTitle();
-        console.log('Round had no perfect, maxStreakInGame reset');
-    }
-    
-    // Reset für nächste Runde
-    state.perfectThisRound = false;
-    state.roundPerfectCount = 0;
-    
     if (state.round < state.maxRounds) { 
         state.round++; 
         updateHUD(); 
         startRound(); 
     } else { 
-        console.log('Last round - calling endGame, hadPerfectInGame:', state.hadPerfectInGame);
         endGame(); 
     } 
 };
@@ -412,11 +384,8 @@ window.startGame = () => {
     canvas.classList.add('ingame');
 
     state.score = 0; state.round = 1; state.lastDistance = null;
-    // Reset nur die Runden-spezifischen Werte, NICHT die globale Streak
-    state.perfectThisRound = false; state.roundPerfectCount = 0;
-    state.hadPerfectInGame = false; state.maxStreakInGame = 0;
-    // perfectStreak bleibt erhalten - wird nur in backToMenu zurückgesetzt wenn kein Perfect im Spiel
-    LeaderboardUI.resetBurningTitle();
+    // Reset Perfect Coins für dieses Spiel
+    state.perfectCoinsThisGame = 0;
     
     document.getElementById('startScreen').classList.add('hidden');
     
@@ -442,14 +411,18 @@ window.startGame = () => {
         modeBadge.innerText = modeName;
     }
     
-    // Timer anzeigen wenn aktiv, sonst komplett verstecken (kein Platz)
+    // Timer anzeigen wenn aktiv (außer bei Blitz - wird später von timer.js gesteuert)
     const timerContainer = document.getElementById('timerContainer');
     if (timerContainer) {
         if (state.currentSettings.timer !== 'off') {
-            timerContainer.style.display = 'block';
-            timerContainer.style.opacity = '1';
+            // Bei Blitz wird der Timer erst in der Input-Phase sichtbar
+            if (state.currentSettings.visibility === 'blitz') {
+                timerContainer.classList.remove('active');
+            } else {
+                timerContainer.classList.add('active');
+            }
         } else {
-            timerContainer.style.display = 'none';
+            timerContainer.classList.remove('active');
         }
     }
     
@@ -472,6 +445,9 @@ function setMode(modeId) {
     MenuUI.updateSettingsUI(modeId, state.blitzExtreme);
     const toggle = document.getElementById('extremeToggle');
     if(toggle) toggle.onchange = () => { state.blitzExtreme = toggle.checked; setMode('blitz'); };
+    
+    // Update coin display color to match mode
+    LobbyUI.updateCoinDisplayColor(modeId);
 }
 
 function startRound() {
@@ -514,7 +490,9 @@ function gameLoop() {
         if (state.currentSettings.special === 'pulsar') state.pulsarPhase += 0.05;
         if (state.currentSettings.special === 'mirage') state.miragePhase += 0.02 + (state.round * 0.015);
 
-        if (state.currentSettings.movement === 'hunter' && (!state.blitzPhase || state.blitzPhase === 'input')) {
+        // Hunter movement only when shape is visible (not during blitz countdown)
+        const isBlitzCountdown = state.blitzPhase === 'countdown';
+        if (state.currentSettings.movement === 'hunter' && !isBlitzCountdown) {
             state.centerPos.x += state.velocity.x;
             state.centerPos.y += state.velocity.y;
             
@@ -524,7 +502,10 @@ function gameLoop() {
             if (state.centerPos.y < bounceMargin || state.centerPos.y > canvas.height - bounceMargin) state.velocity.y *= -1;
         }
 
-        if (state.currentSettings.rotation !== 'off' && (!state.blitzPhase || state.blitzPhase !== 'input')) state.rotation += state.rotationSpeed;
+        // Rotation only when shape is visible (flash phase in blitz, or no blitz)
+        if (state.currentSettings.rotation !== 'off' && !isBlitzCountdown) {
+            state.rotation += state.rotationSpeed;
+        }
     }
     
     // Timer nur updaten wenn nicht frozen
@@ -628,23 +609,17 @@ function handleRoundEnd(dist, tx = 0, ty = 0) {
     const points = calculateScore(dist, state.currentSettings, state.mode, state.blitzExtreme);
     state.score += points;
     
-    // Perfect Streak Tracking (Perfekt = dist < 4px)
+    // Perfect Coin Tracking (Perfekt = dist < 4px)
     const isPerfect = dist < 4;
-    console.log('handleRoundEnd - dist:', dist, 'isPerfect:', isPerfect);
     
     if (isPerfect) {
-        state.perfectThisRound = true;
-        state.roundPerfectCount++;
-        state.hadPerfectInGame = true; // Track that we hit at least one perfect
-        state.maxStreakInGame++; // Increment the in-game streak counter
-        console.log('PERFECT HIT! hadPerfectInGame:', state.hadPerfectInGame, 'maxStreakInGame:', state.maxStreakInGame);
-        // Sofort das Feuer aktivieren mit der aktuellen Spiel-Streak + globale Streak
-        LeaderboardUI.updateBurningTitle(state.perfectStreak + state.maxStreakInGame);
+        state.perfectCoinsThisGame++;
+        console.log('PERFECT HIT! +1 Perfect Coin this game. Total this game:', state.perfectCoinsThisGame);
     }
     
     updateHUD(dist < 900 ? dist : null);
     if(dist < 900) { state.result = { clickX: state.input.deflectedX, clickY: state.input.deflectedY, targetX: tx, targetY: ty, dist: dist }; }
-    setTimeout(() => { LeaderboardUI.showRoundResult(points, dist, state.round, state.maxRounds, window.nextRound, isPerfect, state.perfectStreak); }, 1000);
+    setTimeout(() => { LeaderboardUI.showRoundResult(points, dist, state.round, state.maxRounds, window.nextRound, isPerfect); }, 1000);
 }
 
 function endGame() {
@@ -669,7 +644,7 @@ function endGame() {
     state.user.xp += earnedXp;
     state.user.level = 1 + Math.floor(state.user.xp / XP_PER_LEVEL);
     API.saveUser(state.user);
-    LeaderboardUI.showEndScreen(state.score, earnedXp, state.mode === 'tower', towerSuccess, state.towerFloor, window.backToMenu);
+    LeaderboardUI.showEndScreen(state.score, earnedXp, state.mode === 'tower', towerSuccess, state.towerFloor, window.backToMenu, state.perfectCoinsThisGame);
 }
 
 function getCustomSettings() {

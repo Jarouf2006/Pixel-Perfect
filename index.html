@@ -92,7 +92,6 @@
         <div class="header-area">
             <div class="title-wrapper">
                 <h1 class="main-title" id="mainTitle" onclick="titleClickEffect(event)">Pixel Perfect</h1>
-                <div id="fireEffect" class="fire-effect hidden"></div>
             </div>
 
             <!-- NAVIGATION TABS -->
@@ -102,16 +101,31 @@
             </div>
         </div>
 
+        <!-- Avatar Section (oben links, gespiegelt zum Level) -->
+        <div class="avatar-section">
+            <div class="avatar-circle" id="avatarCircle">
+                <span class="avatar-initial" id="avatarInitial">G</span>
+            </div>
+            <div class="player-name-display" id="arcName">GAST</div>
+        </div>
+        
         <!-- ARC PROFILE (oben rechts) - Arc Raiders Style -->
-        <div class="arc-profile-container" onclick="triggerXPAnim()" ondblclick="devLevelUp()">
-            <div class="arc-circle-wrapper">
-                <svg class="progress-ring" width="60" height="60">
-                    <circle class="progress-ring__circle-bg" cx="30" cy="30" r="28"></circle>
-                    <circle class="progress-ring__circle" id="arcProgress" cx="30" cy="30" r="28"></circle>
+        <div class="arc-profile-container">
+            <!-- Perfect Coins Display -->
+            <div class="perfect-coins-display" id="perfectCoinsDisplay" onclick="coinClickEffect(event)">
+                <span class="coin-icon">💎</span>
+                <span class="coin-count" id="perfectCoinsCount">0</span>
+            </div>
+            
+            <!-- Level Circle (rechts) -->
+            <div class="arc-circle-wrapper" onclick="triggerXPAnim()" ondblclick="devLevelUp()">
+                <svg class="progress-ring" width="52" height="52">
+                    <circle class="progress-ring__circle-bg" cx="26" cy="26" r="24"></circle>
+                    <circle class="progress-ring__circle" id="arcProgress" cx="26" cy="26" r="24"></circle>
                 </svg>
                 <div class="arc-level-text" id="arcLevel">1</div>
             </div>
-            <div class="arc-name" id="arcName">GAST</div>
+            
             <div class="xp-tooltip" id="xpTooltip">- XP bis Level 2</div>
         </div>
 

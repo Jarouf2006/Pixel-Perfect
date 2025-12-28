@@ -146,11 +146,6 @@ export function updateSettingsUI(mode, blitzExtreme) {
     }
     
     if (title) {
-        // Skip title update if fire effect is active
-        if (title.classList.contains('on-fire')) {
-            return;
-        }
-        
         // Reset styles
         title.style.background = ""; 
         title.style.webkitTextFillColor = ""; 
@@ -221,11 +216,6 @@ export function updateSettingsUI(mode, blitzExtreme) {
 export function updateTitleForTower(themeColor) {
     const title = document.getElementById('mainTitle');
     if (!title) return;
-    
-    // Skip if fire effect is active
-    if (title.classList.contains('on-fire')) {
-        return;
-    }
     
     // Hellere Version der Farbe für Gradient
     const lighterColor = themeColor + 'cc'; // etwas transparenter
