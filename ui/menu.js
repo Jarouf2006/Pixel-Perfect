@@ -8,10 +8,10 @@ const MODES = [
     { id: 'pulsar', name: 'Pulsar', icon: '💓', desc: '<ul><li>💓 <strong>Ab Level 10</strong></li><li>🫀 Die Form atmet.</li></ul>' },
     { id: 'blueprint', name: 'Points', icon: '∴', desc: '<ul><li>∴ <strong>Ab Level 12</strong></li><li>🚫 Nur Eckpunkte sichtbar.</li></ul>' },
     { id: 'spotlight', name: 'Spotlight', icon: '🔦', desc: '<ul><li>🔦 <strong>Ab Level 15</strong></li><li>🌑 Alles ist dunkel.</li></ul>' },
-    { id: 'magnet', name: 'Magnet', icon: '🧲', desc: '<ul><li>🧲 <strong>Ab Level 18</strong></li><li>🌪️ Ein Kraftfeld stößt die Maus weg.</li></ul>' },
+    { id: 'shrink', name: 'Shrink', icon: '🔬', desc: '<ul><li>🔬 <strong>Ab Level 18</strong></li><li>📉 Die Form schrumpft kontinuierlich.</li></ul>' },
     { id: 'glitch', name: 'Glitch', icon: '👾', desc: '<ul><li>👾 <strong>Ab Level 20</strong></li><li>📺 Die Simulation ist kaputt.</li></ul>' },
     { id: 'mirage', name: 'Mirage', icon: '🧞', desc: '<ul><li>🧞 <strong>Ab Level 22</strong></li><li>😵 Geisterbilder verwirren dich.</li></ul>' },
-    { id: 'mirror', name: 'Mirror', icon: '🪞', desc: '<ul><li>🪞 <strong>Ab Level 25</strong></li><li>🔄 Steuerung ist invertiert.</li></ul>' },
+    { id: 'decay', name: 'Decay', icon: '☠️', desc: '<ul><li>☠️ <strong>Ab Level 25</strong></li><li>💀 Die Form zerfällt mit der Zeit.</li></ul>' },
     { id: 'custom', name: 'Custom', icon: '🛠️', desc: '<ul><li>🛠️ Sandbox Modus.</li><li>🧪 Keine XP.</li></ul>' }
 ];
 
@@ -29,6 +29,9 @@ export function buildModeGrid(userLevel, requirements, currentMode, onSelect) {
         div.innerHTML = `<div class="mode-icon">${m.icon}</div><div class="mode-name">${m.name}</div>${locked ? `<div style="font-size:10px; margin-top:5px;">🔒 Lv ${requirements[m.id]}</div>` : ''}`;
         grid.appendChild(div);
     });
+    
+    // Parse Emojis
+    if (typeof window.parseEmojis === 'function') window.parseEmojis();
 }
 
 export function updateSettingsUI(mode, blitzExtreme) {
@@ -114,10 +117,10 @@ export function updateSettingsUI(mode, blitzExtreme) {
                     </select>
                 </div>
                 <div class="setting-group">
-                    <select id="c_cursor" class="edgeless-select" data-label="Cursor">
-                        <option value="normal" selected>Normal</option>
-                        <option value="magnet">Magnet</option>
-                        <option value="mirror">Mirror</option>
+                    <select id="c_cursor" class="edgeless-select" data-label="Spezial 2">
+                        <option value="normal" selected>Aus</option>
+                        <option value="shrink">Shrink</option>
+                        <option value="decay">Decay</option>
                     </select>
                 </div>`;
             // Keine distribute-Klasse für Custom -> scrollt stattdessen
@@ -182,9 +185,9 @@ export function updateSettingsUI(mode, blitzExtreme) {
             grad = "linear-gradient(to right, #64748b, #94a3b8)";
             glowColor = "rgba(100, 116, 139, 0.6)";
         }
-        else if (mode === 'magnet') {
-            grad = "linear-gradient(to right, #f97316, #fb923c)";
-            glowColor = "rgba(249, 115, 22, 0.6)";
+        else if (mode === 'shrink') {
+            grad = "linear-gradient(to right, #ec4899, #f472b6)";
+            glowColor = "rgba(236, 72, 153, 0.6)";
         }
         else if (mode === 'glitch') {
             grad = "linear-gradient(to right, #a855f7, #c084fc)";
@@ -194,9 +197,9 @@ export function updateSettingsUI(mode, blitzExtreme) {
             grad = "linear-gradient(to right, #14b8a6, #2dd4bf)";
             glowColor = "rgba(20, 184, 166, 0.6)";
         }
-        else if (mode === 'mirror') {
-            grad = "linear-gradient(to right, #94a3b8, #cbd5e1)";
-            glowColor = "rgba(148, 163, 184, 0.6)";
+        else if (mode === 'decay') {
+            grad = "linear-gradient(to right, #84cc16, #a3e635)";
+            glowColor = "rgba(132, 204, 22, 0.6)";
         }
         else if (mode === 'custom') {
             grad = "linear-gradient(to right, #8b5cf6, #a78bfa)";
@@ -210,6 +213,9 @@ export function updateSettingsUI(mode, blitzExtreme) {
             title.style.setProperty('--glow-color', glowColor);
         }
     }
+    
+    // Parse Emojis
+    if (typeof window.parseEmojis === 'function') window.parseEmojis();
 }
 
 // Update Title für Tower Mode - passt Farbe an aktuelle Ebene an
@@ -289,8 +295,8 @@ export function updateTowerUI(floor, maxFloor, config, themeColor, onStart, user
                 <ul class="tower-dangers-list">
                     ${config.movement !== 'off' ? `<li style="color:${themeColor}">🏃 Hunter aktiv</li>` : '<li class="inactive">🏃 Hunter inaktiv</li>'}
                     ${config.style === 'spotlight' ? `<li style="color:#94a3b8">🔦 Dunkelheit</li>` : ''}
-                    ${config.cursor === 'magnet' ? `<li style="color:#f97316">🧲 Magnet-Feld</li>` : ''}
-                    ${config.cursor === 'mirror' ? `<li style="color:#e2e8f0">🪞 Spiegelung</li>` : ''}
+                    ${config.special === 'shrink' ? `<li style="color:#ec4899">🧲 Shrink</li>` : ''}
+                    ${config.special === 'decay' ? `<li style="color:#84cc16">🪞 Decay</li>` : ''}
                     ${config.timer !== 'off' ? `<li style="color:#ef4444">⏱️ Zeitlimit</li>` : ''}
                     ${config.special === 'glitch' ? `<li style="color:#a855f7">👾 Glitch</li>` : ''}
                     ${config.special === 'mirage' ? `<li style="color:#14b8a6">🧞 Mirage</li>` : ''}
@@ -323,12 +329,15 @@ export function updateTowerUI(floor, maxFloor, config, themeColor, onStart, user
         triggerEpicAscendAnimation(floor, themeColor);
     }
     
+    // Parse Emojis
+    if (typeof window.parseEmojis === 'function') window.parseEmojis();
+    
     view.classList.remove('hidden');
 }
 
 // Helper: Tower Color based on floor
 function getTowerColor(floor) {
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#6366f1', '#14b8a6'];
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#ec4899', '#6366f1', '#14b8a6'];
     return colors[(floor - 1) % colors.length];
 }
 

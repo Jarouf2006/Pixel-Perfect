@@ -48,20 +48,20 @@ export function updateCoinDisplayColor(mode, towerColor = null) {
     const avatarCircle = document.getElementById('avatarCircle');
     if (!coinDisplay) return;
     
-    // Mode-specific colors
+    // Mode-specific colors - using FIRST gradient color as primary (matches h1)
     const modeColors = {
-        'normal': { border: 'rgba(52, 211, 153, 0.4)', glow: 'rgba(52, 211, 153, 0.2)', text: '#6ee7b7', solid: '#34d399' },
-        'turnier': { border: 'rgba(245, 158, 11, 0.4)', glow: 'rgba(245, 158, 11, 0.2)', text: '#fcd34d', solid: '#f59e0b' },
-        'blitz': { border: 'rgba(251, 191, 36, 0.4)', glow: 'rgba(251, 191, 36, 0.2)', text: '#fde68a', solid: '#fbbf24' },
-        'hunter': { border: 'rgba(34, 211, 238, 0.4)', glow: 'rgba(34, 211, 238, 0.2)', text: '#67e8f9', solid: '#22d3ee' },
-        'pulsar': { border: 'rgba(232, 121, 249, 0.4)', glow: 'rgba(232, 121, 249, 0.2)', text: '#f0abfc', solid: '#e879f9' },
-        'blueprint': { border: 'rgba(96, 165, 250, 0.4)', glow: 'rgba(96, 165, 250, 0.2)', text: '#93c5fd', solid: '#60a5fa' },
-        'spotlight': { border: 'rgba(148, 163, 184, 0.4)', glow: 'rgba(148, 163, 184, 0.2)', text: '#cbd5e1', solid: '#94a3b8' },
-        'magnet': { border: 'rgba(251, 146, 60, 0.4)', glow: 'rgba(251, 146, 60, 0.2)', text: '#fdba74', solid: '#fb923c' },
-        'glitch': { border: 'rgba(192, 132, 252, 0.4)', glow: 'rgba(192, 132, 252, 0.2)', text: '#d8b4fe', solid: '#c084fc' },
-        'mirage': { border: 'rgba(45, 212, 191, 0.4)', glow: 'rgba(45, 212, 191, 0.2)', text: '#5eead4', solid: '#2dd4bf' },
-        'mirror': { border: 'rgba(203, 213, 225, 0.4)', glow: 'rgba(203, 213, 225, 0.2)', text: '#e2e8f0', solid: '#cbd5e1' },
-        'custom': { border: 'rgba(167, 139, 250, 0.4)', glow: 'rgba(167, 139, 250, 0.2)', text: '#c4b5fd', solid: '#a78bfa' }
+        'normal': { border: 'rgba(96, 165, 250, 0.4)', glow: 'rgba(96, 165, 250, 0.2)', text: '#93c5fd', solid: '#60a5fa', dark: '#3b82f6' },
+        'turnier': { border: 'rgba(239, 68, 68, 0.4)', glow: 'rgba(239, 68, 68, 0.2)', text: '#fca5a5', solid: '#ef4444', dark: '#dc2626' },
+        'blitz': { border: 'rgba(245, 158, 11, 0.4)', glow: 'rgba(245, 158, 11, 0.2)', text: '#fcd34d', solid: '#f59e0b', dark: '#d97706' },
+        'hunter': { border: 'rgba(6, 182, 212, 0.4)', glow: 'rgba(6, 182, 212, 0.2)', text: '#67e8f9', solid: '#06b6d4', dark: '#0891b2' },
+        'pulsar': { border: 'rgba(217, 70, 239, 0.4)', glow: 'rgba(217, 70, 239, 0.2)', text: '#f0abfc', solid: '#d946ef', dark: '#c026d3' },
+        'blueprint': { border: 'rgba(59, 130, 246, 0.4)', glow: 'rgba(59, 130, 246, 0.2)', text: '#93c5fd', solid: '#3b82f6', dark: '#2563eb' },
+        'spotlight': { border: 'rgba(100, 116, 139, 0.4)', glow: 'rgba(100, 116, 139, 0.2)', text: '#cbd5e1', solid: '#64748b', dark: '#475569' },
+        'shrink': { border: 'rgba(236, 72, 153, 0.4)', glow: 'rgba(236, 72, 153, 0.2)', text: '#f9a8d4', solid: '#ec4899', dark: '#db2777' },
+        'glitch': { border: 'rgba(168, 85, 247, 0.4)', glow: 'rgba(168, 85, 247, 0.2)', text: '#d8b4fe', solid: '#a855f7', dark: '#9333ea' },
+        'mirage': { border: 'rgba(20, 184, 166, 0.4)', glow: 'rgba(20, 184, 166, 0.2)', text: '#5eead4', solid: '#14b8a6', dark: '#0d9488' },
+        'decay': { border: 'rgba(132, 204, 22, 0.4)', glow: 'rgba(132, 204, 22, 0.2)', text: '#bef264', solid: '#84cc16', dark: '#65a30d' },
+        'custom': { border: 'rgba(139, 92, 246, 0.4)', glow: 'rgba(139, 92, 246, 0.2)', text: '#c4b5fd', solid: '#8b5cf6', dark: '#7c3aed' }
     };
     
     let colors;
@@ -71,7 +71,8 @@ export function updateCoinDisplayColor(mode, towerColor = null) {
             border: towerColor + '66', 
             glow: towerColor + '33', 
             text: towerColor,
-            solid: towerColor
+            solid: towerColor,
+            dark: darkenColor(towerColor, 20)
         };
     } else {
         colors = modeColors[mode] || modeColors['normal'];
@@ -92,6 +93,23 @@ export function updateCoinDisplayColor(mode, towerColor = null) {
     if (levelWrapper) {
         levelWrapper.style.setProperty('--level-color', colors.solid);
     }
+    
+    // Set global mode color CSS variables on body for buttons, cards, etc.
+    document.body.style.setProperty('--mode-color', colors.solid);
+    document.body.style.setProperty('--mode-color-dark', colors.dark);
+    document.body.style.setProperty('--mode-glow', colors.glow);
+    document.body.style.setProperty('--mode-glow-strong', colors.border);
+    document.body.style.setProperty('--mode-bg', colors.glow);
+}
+
+// Helper: Darken a hex color
+function darkenColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max(0, (num >> 16) - amt);
+    const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
+    const B = Math.max(0, (num & 0x0000FF) - amt);
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 }
 
 export function showAuth() {

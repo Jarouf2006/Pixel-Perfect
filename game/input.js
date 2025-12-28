@@ -6,8 +6,7 @@ export function setupInput(canvas) {
         y: 300,
         deflectedX: 300,
         deflectedY: 300,
-        clicked: false,
-        magnetPhase: 0
+        clicked: false
     };
 
     function updatePosition(evt) {
@@ -39,28 +38,6 @@ export function setupInput(canvas) {
 export function processInputEffects(inputState, settings, centerPos) {
     inputState.deflectedX = inputState.x;
     inputState.deflectedY = inputState.y;
-
-    if (settings.cursor === 'mirror') {
-        inputState.deflectedX = 600 - inputState.x;
-        inputState.deflectedY = 600 - inputState.y;
-    }
-
-    if (settings.cursor === 'magnet') {
-        inputState.magnetPhase += 0.08;
-        const pulseStrength = (Math.sin(inputState.magnetPhase) + 1) / 2;
-        const dx = inputState.x - centerPos.x;
-        const dy = inputState.y - centerPos.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const maxDist = 250;
-
-        if (dist < maxDist) {
-            const distanceFactor = (1 - dist/maxDist);
-            const force = distanceFactor * 140 * pulseStrength;
-            const angle = Math.atan2(dy, dx);
-            inputState.deflectedX += Math.cos(angle) * force;
-            inputState.deflectedY += Math.sin(angle) * force;
-        }
-    }
 }
 
 export function resetInputClick(inputState) {

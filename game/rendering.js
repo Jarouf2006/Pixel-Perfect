@@ -101,6 +101,12 @@ export function renderGame(ctx, gameState) {
         ctx.scale(scale, scale);
     }
     
+    // Shrink mode: Apply shrink scale
+    if (settings.special === 'shrink') {
+        const shrinkScale = gameState.shrinkScale || 1;
+        ctx.scale(shrinkScale, shrinkScale);
+    }
+    
     // Glitch-Effekt nur wenn nicht geklickt wurde (kein result und nicht frozen)
     const glitchActive = isGlitch && !result && !gameState.frozen;
     
@@ -109,10 +115,16 @@ export function renderGame(ctx, gameState) {
     }
     
     ctx.rotate(rotation);
+    
+    // Decay mode: Only draw visible vertices
+    const isDecay = settings.special === 'decay';
+    const decayVertices = gameState.decayVertices || vertices.map(() => true);
+    const visibleVerts = isDecay ? vertices.filter((v, i) => decayVertices[i]) : vertices;
+    
     ctx.beginPath();
     
-    for (let i = 0; i < vertices.length; i++) {
-        let v = vertices[i];
+    for (let i = 0; i < visibleVerts.length; i++) {
+        let v = visibleVerts[i];
         let vx = v.x, vy = v.y;
         if (glitchActive) { vx += (Math.random()-0.5)*15; vy += (Math.random()-0.5)*15; }
         if (i===0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
@@ -122,8 +134,8 @@ export function renderGame(ctx, gameState) {
     if (isBlueprint) {
         // Blueprint: Nur Eckpunkte, keine Füllung
         ctx.fillStyle = '#fff';
-        for (let i = 0; i < vertices.length; i++) {
-            ctx.beginPath(); ctx.arc(vertices[i].x, vertices[i].y, 4, 0, Math.PI*2); ctx.fill();
+        for (let i = 0; i < visibleVerts.length; i++) {
+            ctx.beginPath(); ctx.arc(visibleVerts[i].x, visibleVerts[i].y, 4, 0, Math.PI*2); ctx.fill();
         }
     } else if (isBlitz && blitzPhase === 'flash' && !result) {
         // Blitz Flash: Weiße Umrisse
@@ -170,10 +182,10 @@ export function renderGame(ctx, gameState) {
             grad.addColorStop(0, '#64748b');
             grad.addColorStop(1, '#94a3b8');
         }
-        else if (mode === 'magnet' || settings.cursor === 'magnet') {
-            // Magnet: Orange
-            grad.addColorStop(0, '#f97316');
-            grad.addColorStop(1, '#fb923c');
+        else if (mode === 'shrink' || settings.special === 'shrink') {
+            // Shrink: Pink/Rose
+            grad.addColorStop(0, '#ec4899');
+            grad.addColorStop(1, '#f472b6');
         }
         else if (mode === 'glitch' || settings.special === 'glitch') {
             // Glitch: Lila
@@ -185,10 +197,10 @@ export function renderGame(ctx, gameState) {
             grad.addColorStop(0, '#14b8a6');
             grad.addColorStop(1, '#2dd4bf');
         }
-        else if (mode === 'mirror' || settings.cursor === 'mirror') {
-            // Mirror: Silber/Hellgrau
-            grad.addColorStop(0, '#94a3b8');
-            grad.addColorStop(1, '#cbd5e1');
+        else if (mode === 'decay' || settings.special === 'decay') {
+            // Decay: Lime/Green
+            grad.addColorStop(0, '#84cc16');
+            grad.addColorStop(1, '#a3e635');
         }
         else if (mode === 'custom') {
             // Custom: Violett
@@ -216,23 +228,7 @@ export function renderGame(ctx, gameState) {
     }
     ctx.restore();
 
-    // 7. Cursor Effekte (nur wenn noch kein Ergebnis da ist)
-    if (!result) {
-        if (settings.cursor === 'magnet') {
-            const pulse = (Math.sin(input.magnetPhase) + 1) / 2;
-            ctx.beginPath(); ctx.arc(input.deflectedX, input.deflectedY, 4, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
-            const alpha = 0.2 + (0.6 * pulse); const size = 12 + (5 * pulse);
-            ctx.beginPath(); ctx.strokeStyle = `rgba(249, 115, 22, ${alpha})`; ctx.lineWidth = 2 + (4 * pulse);
-            ctx.arc(input.deflectedX, input.deflectedY, size, 0, Math.PI*2); ctx.stroke();
-        } else if (settings.cursor === 'mirror') {
-            const { deflectedX: mx, deflectedY: my } = input;
-            ctx.beginPath(); ctx.moveTo(mx - 10, my); ctx.lineTo(mx + 10, my);
-            ctx.moveTo(mx, my - 10); ctx.lineTo(mx, my + 10); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.beginPath(); ctx.arc(mx, my, 6, 0, Math.PI*2); ctx.strokeStyle = '#94a3b8'; ctx.stroke();
-        }
-    }
-
-    // 8. ERGEBNIS MARKER
+    // 7. ERGEBNIS MARKER
     if (result) {
         // Bestimme Formfarbe für Kontrast
         let shapeColor = '#3b82f6'; // Default
@@ -240,10 +236,10 @@ export function renderGame(ctx, gameState) {
         else if (mode === 'turnier') shapeColor = '#ef4444';
         else if (mode === 'hunter' || settings.movement === 'hunter') shapeColor = '#06b6d4';
         else if (mode === 'pulsar' || settings.special === 'pulsar') shapeColor = '#d946ef';
-        else if (mode === 'magnet' || settings.cursor === 'magnet') shapeColor = '#f97316';
+        else if (mode === 'shrink' || settings.special === 'shrink') shapeColor = '#ec4899';
         else if (mode === 'glitch' || settings.special === 'glitch') shapeColor = '#a855f7';
         else if (mode === 'mirage' || settings.special === 'mirage') shapeColor = '#14b8a6';
-        else if (mode === 'mirror' || settings.cursor === 'mirror') shapeColor = '#94a3b8';
+        else if (mode === 'decay' || settings.special === 'decay') shapeColor = '#84cc16';
         else if (mode === 'spotlight' || settings.style === 'spotlight') shapeColor = '#64748b';
         
         // Kontrastfarbe für Click-Punkt (Grün wenn Form rötlich/lila, sonst Magenta)

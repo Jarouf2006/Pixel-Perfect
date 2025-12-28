@@ -10,7 +10,7 @@ import * as LeaderboardUI from './ui/leaderboard.js';
 import * as API from './net/api.js';
 
 // --- KONSTANTEN & CONFIG ---
-const LEVELS = { turnier: 3, blitz: 5, hunter: 7, pulsar: 10, blueprint: 12, spotlight: 15, magnet: 18, glitch: 20, mirage: 22, mirror: 25, custom: 1 };
+const LEVELS = { turnier: 3, blitz: 5, hunter: 7, pulsar: 10, blueprint: 12, spotlight: 15, shrink: 18, glitch: 20, mirage: 22, decay: 25, custom: 1 };
 const XP_PER_LEVEL = 5000; 
 
 const MODE_PRESETS = {
@@ -20,10 +20,10 @@ const MODE_PRESETS = {
     hunter: { movement: 'hunter', rotation: 'off', size: 'medium', complexity: 'medium', timer: 'off', visibility: 'normal' },
     pulsar: { special: 'pulsar', rotation: 'off', size: 'medium', complexity: 'medium', timer: 'off', visibility: 'normal' },
     spotlight: { style: 'spotlight', size: 'large', rotation: 'off', complexity: 'medium', timer: 'off', visibility: 'normal' },
-    magnet: { cursor: 'magnet', size: 'medium', complexity: 'medium', rotation: 'off', timer: 'off', visibility: 'normal' },
+    shrink: { special: 'shrink', size: 'large', complexity: 'medium', rotation: 'slow', timer: 'off', visibility: 'normal' },
     glitch: { special: 'glitch', complexity: 'chaos', rotation: 'slow', size: 'medium', timer: 'off', visibility: 'normal' },
     mirage: { special: 'mirage', rotation: 'slow', complexity: 'medium', size: 'medium', timer: 'off', visibility: 'normal' },
-    mirror: { cursor: 'mirror', size: 'medium', complexity: 'medium', rotation: 'off', timer: 'off', visibility: 'normal' },
+    decay: { special: 'decay', size: 'medium', complexity: 'high', rotation: 'off', timer: 'off', visibility: 'normal' },
     blueprint: { style: 'blueprint', rotation: 'off', size: 'medium', complexity: 'medium', timer: 'off', visibility: 'normal' }
 };
 
@@ -39,6 +39,10 @@ let state = {
     pulsarPhase: 0, miragePhase: 0, towerFloor: 1, towerTarget: 0, towerAscended: false, towerColor: '#3b82f6',
     currentSettings: {}, input: setupInput(canvas), startTime: 0, result: null,
     frozen: false, frozenTime: 0, lastDistance: null,
+    // Shrink mode: scale factor (starts at 1, shrinks over time)
+    shrinkScale: 1,
+    // Decay mode: which vertices are still visible
+    decayVertices: [], decayTimer: 0,
     // Perfect Coins tracking (earned this game)
     perfectCoinsThisGame: 0
 };
@@ -72,6 +76,8 @@ function initApp() {
         MenuUI.buildModeGrid(state.user.level, LEVELS, state.mode, setMode);
         setMode(state.mode === 'tower' ? 'normal' : state.mode);
         MenuUI.switchMainTab('modes');
+        // Parse Emojis nach UI-Build
+        if (typeof parseEmojis === 'function') parseEmojis();
     } else {
         document.getElementById('introOverlay').classList.remove('hidden');
         setupAuthListeners();
@@ -177,10 +183,10 @@ window.titleClickEffect = (event) => {
         'pulsar': '#e879f9',     // Pink
         'blueprint': '#60a5fa',  // Blue
         'spotlight': '#94a3b8',  // Gray
-        'magnet': '#fb923c',     // Orange
+        'shrink': '#f472b6',     // Pink
         'glitch': '#c084fc',     // Purple
         'mirage': '#2dd4bf',     // Teal
-        'mirror': '#cbd5e1',     // Light Gray
+        'decay': '#a3e635',      // Lime
         'custom': '#a78bfa',     // Violet
         'tower': '#3b82f6'       // Blue (default tower)
     };
@@ -376,7 +382,7 @@ window.startGame = () => {
     
     // WICHTIG: Cursor-Logik - Standard ist crosshair, außer bei speziellen Modi
     canvas.classList.remove('hide-cursor');
-    if (state.currentSettings.style === 'spotlight' || state.currentSettings.cursor === 'magnet' || state.currentSettings.cursor === 'mirror') {
+    if (state.currentSettings.style === 'spotlight') {
         canvas.classList.add('hide-cursor');
     }
     
@@ -474,6 +480,14 @@ function startRound() {
         const angle = Math.random() * Math.PI * 2;
         state.velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
     }
+    
+    // Shrink mode: Reset scale to 1
+    state.shrinkScale = 1;
+    
+    // Decay mode: Initialize all vertices as visible, reset timer
+    state.decayVertices = state.vertices.map(() => true);
+    state.decayTimer = 0;
+    
     state.waitingForClick = true;
     state.startTime = Date.now();
     state.blitzPhase = null;
@@ -505,6 +519,32 @@ function gameLoop() {
         // Rotation only when shape is visible (flash phase in blitz, or no blitz)
         if (state.currentSettings.rotation !== 'off' && !isBlitzCountdown) {
             state.rotation += state.rotationSpeed;
+        }
+        
+        // Shrink mode: Continuously shrink the form
+        if (state.currentSettings.special === 'shrink') {
+            // Shrink rate: starts slow, gets faster (minimum scale 0.3)
+            const shrinkRate = 0.002 + (state.round * 0.0005);
+            state.shrinkScale = Math.max(0.3, state.shrinkScale - shrinkRate);
+        }
+        
+        // Decay mode: Remove vertices over time
+        if (state.currentSettings.special === 'decay') {
+            state.decayTimer++;
+            // Every ~60 frames (1 second), remove a random visible vertex
+            const decayInterval = Math.max(30, 60 - (state.round * 5)); // Faster decay in later rounds
+            if (state.decayTimer >= decayInterval) {
+                state.decayTimer = 0;
+                // Find visible vertices (need at least 3 to keep a valid shape)
+                const visibleIndices = state.decayVertices
+                    .map((v, i) => v ? i : -1)
+                    .filter(i => i !== -1);
+                if (visibleIndices.length > 3) {
+                    // Remove a random vertex
+                    const removeIdx = visibleIndices[Math.floor(Math.random() * visibleIndices.length)];
+                    state.decayVertices[removeIdx] = false;
+                }
+            }
         }
     }
     
@@ -666,10 +706,10 @@ function updateHUD(dist) {
     document.getElementById('lastDistance').innerText = state.lastDistance ? state.lastDistance.toFixed(1) + "px" : "-";
 }
 function getTowerConfig(floor) {
-    let config = { size: 'large', complexity: 'simple', rotation: 'off', timer: 'off', visibility: 'normal', movement: 'off', special: 'off', style: 'normal', cursor: 'normal', target: 1000 };
+    let config = { size: 'large', complexity: 'simple', rotation: 'off', timer: 'off', visibility: 'normal', movement: 'off', special: 'off', style: 'normal', target: 1000 };
     config.target = Math.min(4900, 1000 + (floor * 130));
     if (floor >= 3) config.complexity = 'medium'; if (floor >= 8) config.rotation = 'slow'; if (floor >= 12) config.size = 'small'; if (floor >= 20) config.timer = '3000';
-    const specialLevels = { 5: {movement:'hunter'}, 10: {style:'spotlight'}, 15: {cursor:'magnet'}, 20: {special:'glitch'}, 25: {special:'mirage'} };
+    const specialLevels = { 5: {movement:'hunter'}, 10: {style:'spotlight'}, 15: {special:'shrink'}, 20: {special:'glitch'}, 25: {special:'decay'} };
     if (specialLevels[floor]) Object.assign(config, specialLevels[floor]);
     return config;
 }
@@ -689,4 +729,20 @@ function createPolygon(size, complexity) {
     return vs;
 }
 
+// Twemoji: Parse alle Emojis im Dokument (macht sie konsistent auf allen Plattformen)
+function parseEmojis() {
+    if (typeof twemoji !== 'undefined') {
+        twemoji.parse(document.body, {
+            folder: 'svg',
+            ext: '.svg'
+        });
+    }
+}
+
+// Export für andere Module
+window.parseEmojis = parseEmojis;
+
 initApp();
+
+// Initial Emojis parsen nach DOM-Load
+document.addEventListener('DOMContentLoaded', parseEmojis);
