@@ -116,15 +116,36 @@ export function renderGame(ctx, gameState) {
     
     ctx.rotate(rotation);
     
-    // Decay mode: Only draw visible vertices
+    // Decay mode: Handle vertices with warning animation
     const isDecay = settings.special === 'decay';
     const decayVertices = gameState.decayVertices || vertices.map(() => true);
-    const visibleVerts = isDecay ? vertices.filter((v, i) => decayVertices[i]) : vertices;
+    const decayWarning = gameState.decayWarning !== undefined ? gameState.decayWarning : -1;
+    const decayWarningTime = gameState.decayWarningTime || 0;
+    
+    // Build visible vertices array, applying shake to warning vertex
+    let visibleVerts = [];
+    if (isDecay) {
+        for (let i = 0; i < vertices.length; i++) {
+            if (decayVertices[i]) {
+                let v = { ...vertices[i] };
+                // Apply shake to warning vertex
+                if (i === decayWarning && !result && !gameState.frozen) {
+                    const shakeIntensity = 3 + (decayWarningTime / 45) * 8; // Increases over time
+                    const shakeSpeed = 0.5 + (decayWarningTime / 45) * 0.5;
+                    v.x += Math.sin(decayWarningTime * shakeSpeed) * shakeIntensity;
+                    v.y += Math.cos(decayWarningTime * shakeSpeed * 1.3) * shakeIntensity;
+                }
+                visibleVerts.push({ vertex: v, originalIndex: i });
+            }
+        }
+    } else {
+        visibleVerts = vertices.map((v, i) => ({ vertex: v, originalIndex: i }));
+    }
     
     ctx.beginPath();
     
     for (let i = 0; i < visibleVerts.length; i++) {
-        let v = visibleVerts[i];
+        let v = visibleVerts[i].vertex;
         let vx = v.x, vy = v.y;
         if (glitchActive) { vx += (Math.random()-0.5)*15; vy += (Math.random()-0.5)*15; }
         if (i===0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
@@ -135,7 +156,7 @@ export function renderGame(ctx, gameState) {
         // Blueprint: Nur Eckpunkte, keine Füllung
         ctx.fillStyle = '#fff';
         for (let i = 0; i < visibleVerts.length; i++) {
-            ctx.beginPath(); ctx.arc(visibleVerts[i].x, visibleVerts[i].y, 4, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(visibleVerts[i].vertex.x, visibleVerts[i].vertex.y, 4, 0, Math.PI*2); ctx.fill();
         }
     } else if (isBlitz && blitzPhase === 'flash' && !result) {
         // Blitz Flash: Weiße Umrisse
@@ -227,6 +248,36 @@ export function renderGame(ctx, gameState) {
         }
     }
     ctx.restore();
+
+    // 6b. Decay: Draw falling pieces
+    if (isDecay && gameState.decayFallingPieces && gameState.decayFallingPieces.length > 0) {
+        gameState.decayFallingPieces.forEach(piece => {
+            ctx.save();
+            ctx.translate(piece.x, piece.y);
+            ctx.rotate(piece.rotation);
+            ctx.globalAlpha = piece.opacity;
+            
+            ctx.beginPath();
+            piece.vertices.forEach((v, i) => {
+                if (i === 0) ctx.moveTo(v.x, v.y);
+                else ctx.lineTo(v.x, v.y);
+            });
+            ctx.closePath();
+            
+            // Decay color gradient
+            const grad = ctx.createLinearGradient(-10, -10, 10, 10);
+            grad.addColorStop(0, '#84cc16');
+            grad.addColorStop(1, '#a3e635');
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,' + piece.opacity + ')';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        });
+    }
 
     // 7. ERGEBNIS MARKER
     if (result) {

@@ -41,8 +41,13 @@ let state = {
     frozen: false, frozenTime: 0, lastDistance: null,
     // Shrink mode: scale factor (starts at 1, shrinks over time)
     shrinkScale: 1,
-    // Decay mode: which vertices are still visible
-    decayVertices: [], decayTimer: 0,
+    // Decay mode: enhanced with falling pieces
+    decayVertices: [],      // Which vertices are still attached
+    decayTimer: 0,          // Timer for next decay
+    decayWarning: -1,       // Index of vertex about to fall (-1 = none)
+    decayWarningTime: 0,    // How long warning has been active
+    decayFallingPieces: [], // Array of {vertices: [], x, y, vx, vy, rotation, rotationSpeed, opacity}
+    decayDestroyed: false,  // True when form has been completely destroyed
     // Perfect Coins tracking (earned this game)
     perfectCoinsThisGame: 0
 };
@@ -460,7 +465,10 @@ function startRound() {
     document.getElementById('nextOverlay').classList.add('hidden');
     state.result = null;
     state.frozen = false; // Reset frozen state für neue Runde
-    state.vertices = createPolygon(state.currentSettings.size, state.currentSettings.complexity);
+    
+    // Decay mode needs at least 5 vertices (so player has 2 chances before destruction)
+    const minPoints = state.currentSettings.special === 'decay' ? 5 : 0;
+    state.vertices = createPolygon(state.currentSettings.size, state.currentSettings.complexity, minPoints);
     
     // WICHTIG: Dynamische Grenzen für 900px Breite
     const safeMargin = 150; 
@@ -484,9 +492,13 @@ function startRound() {
     // Shrink mode: Reset scale to 1
     state.shrinkScale = 1;
     
-    // Decay mode: Initialize all vertices as visible, reset timer
+    // Decay mode: Initialize all vertices as attached, reset all decay state
     state.decayVertices = state.vertices.map(() => true);
     state.decayTimer = 0;
+    state.decayWarning = -1;
+    state.decayWarningTime = 0;
+    state.decayFallingPieces = [];
+    state.decayDestroyed = false;
     
     state.waitingForClick = true;
     state.startTime = Date.now();
@@ -528,24 +540,118 @@ function gameLoop() {
             state.shrinkScale = Math.max(0.3, state.shrinkScale - shrinkRate);
         }
         
-        // Decay mode: Remove vertices over time
+        // Decay mode: Warning -> Break -> Fall animation
         if (state.currentSettings.special === 'decay') {
-            state.decayTimer++;
-            // Every ~60 frames (1 second), remove a random visible vertex
-            const decayInterval = Math.max(30, 60 - (state.round * 5)); // Faster decay in later rounds
-            if (state.decayTimer >= decayInterval) {
-                state.decayTimer = 0;
-                // Find visible vertices (need at least 3 to keep a valid shape)
-                const visibleIndices = state.decayVertices
-                    .map((v, i) => v ? i : -1)
-                    .filter(i => i !== -1);
-                if (visibleIndices.length > 3) {
-                    // Remove a random vertex
-                    const removeIdx = visibleIndices[Math.floor(Math.random() * visibleIndices.length)];
-                    state.decayVertices[removeIdx] = false;
+            const decayInterval = Math.max(90, 150 - (state.round * 10)); // Time between decays
+            const warningDuration = 45; // ~0.75 seconds warning
+            
+            // Find attached vertices
+            const attachedIndices = state.decayVertices
+                .map((v, i) => v ? i : -1)
+                .filter(i => i !== -1);
+            
+            // If only 3 vertices left, DESTROY the form completely!
+            if (attachedIndices.length === 3 && !state.decayDestroyed) {
+                state.decayDestroyed = true;
+                
+                // Create falling pieces for ALL remaining vertices
+                attachedIndices.forEach(idx => {
+                    const v = state.vertices[idx];
+                    const cos = Math.cos(state.rotation);
+                    const sin = Math.sin(state.rotation);
+                    const worldX = state.centerPos.x + (v.x * cos - v.y * sin);
+                    const worldY = state.centerPos.y + (v.x * sin + v.y * cos);
+                    
+                    state.decayFallingPieces.push({
+                        vertices: [
+                            { x: 0, y: 0 },
+                            { x: (Math.random() - 0.5) * 30, y: (Math.random() - 0.5) * 30 },
+                            { x: (Math.random() - 0.5) * 30, y: (Math.random() - 0.5) * 30 }
+                        ],
+                        x: worldX,
+                        y: worldY,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: -3 - Math.random() * 3,
+                        rotation: Math.random() * Math.PI * 2,
+                        rotationSpeed: (Math.random() - 0.5) * 0.2,
+                        opacity: 1
+                    });
+                    
+                    state.decayVertices[idx] = false;
+                });
+                
+                // End round with 0 points (999 distance = worst score)
+                state.frozen = true;
+                state.frozenTime = Date.now();
+                handleRoundEnd(999, state.centerPos.x, state.centerPos.y);
+            }
+            else if (attachedIndices.length > 3) {
+                // If no warning active, count up to trigger one
+                if (state.decayWarning === -1) {
+                    state.decayTimer++;
+                    if (state.decayTimer >= decayInterval) {
+                        // Start warning on random vertex
+                        state.decayWarning = attachedIndices[Math.floor(Math.random() * attachedIndices.length)];
+                        state.decayWarningTime = 0;
+                        state.decayTimer = 0;
+                    }
+                } else {
+                    // Warning is active - shake and then break
+                    state.decayWarningTime++;
+                    if (state.decayWarningTime >= warningDuration) {
+                        // BREAK! Create falling piece
+                        const breakIdx = state.decayWarning;
+                        const v = state.vertices[breakIdx];
+                        
+                        // Get neighboring vertices to form a triangle piece
+                        const prevIdx = (breakIdx - 1 + state.vertices.length) % state.vertices.length;
+                        const nextIdx = (breakIdx + 1) % state.vertices.length;
+                        
+                        // Calculate world position of the breaking piece
+                        const cos = Math.cos(state.rotation);
+                        const sin = Math.sin(state.rotation);
+                        const worldX = state.centerPos.x + (v.x * cos - v.y * sin);
+                        const worldY = state.centerPos.y + (v.x * sin + v.y * cos);
+                        
+                        // Create falling piece (small triangle)
+                        const pieceVerts = [
+                            { x: 0, y: 0 },
+                            { x: (state.vertices[prevIdx].x - v.x) * 0.3, y: (state.vertices[prevIdx].y - v.y) * 0.3 },
+                            { x: (state.vertices[nextIdx].x - v.x) * 0.3, y: (state.vertices[nextIdx].y - v.y) * 0.3 }
+                        ];
+                        
+                        state.decayFallingPieces.push({
+                            vertices: pieceVerts,
+                            x: worldX,
+                            y: worldY,
+                            vx: (Math.random() - 0.5) * 3,
+                            vy: -2 - Math.random() * 2,
+                            rotation: state.rotation,
+                            rotationSpeed: (Math.random() - 0.5) * 0.15,
+                            opacity: 1
+                        });
+                        
+                        // Remove vertex
+                        state.decayVertices[breakIdx] = false;
+                        state.decayWarning = -1;
+                        state.decayWarningTime = 0;
+                    }
                 }
             }
         }
+    }
+    
+    // Update falling pieces (always, even when frozen for nice effect)
+    if (state.currentSettings.special === 'decay') {
+        state.decayFallingPieces.forEach(piece => {
+            piece.vy += 0.3; // Gravity
+            piece.x += piece.vx;
+            piece.y += piece.vy;
+            piece.rotation += piece.rotationSpeed;
+            piece.opacity -= 0.015;
+        });
+        // Remove faded pieces
+        state.decayFallingPieces = state.decayFallingPieces.filter(p => p.opacity > 0 && p.y < canvas.height + 50);
     }
     
     // Timer nur updaten wenn nicht frozen
@@ -567,7 +673,13 @@ function gameLoop() {
                 state.frozen = true;
                 state.frozenTime = Date.now();
                 
-                const hitData = calculateHit(state.input, state.centerPos, state.rotation, state.vertices);
+                // For Decay mode, use only visible vertices for centroid calculation
+                let hitVertices = state.vertices;
+                if (state.currentSettings.special === 'decay') {
+                    hitVertices = state.vertices.filter((v, i) => state.decayVertices[i]);
+                }
+                
+                const hitData = calculateHit(state.input, state.centerPos, state.rotation, hitVertices);
                 handleRoundEnd(hitData.dist, hitData.targetX, hitData.targetY);
             }
             resetInputClick(state.input);
@@ -609,8 +721,12 @@ document.addEventListener('keydown', (e) => {
                 state.frozen = true;
                 state.frozenTime = Date.now();
                 
-                // Calculate perfect target position
-                const centroid = getCentroid(state.vertices);
+                // Calculate perfect target position (use visible vertices for decay)
+                let targetVertices = state.vertices;
+                if (state.currentSettings.special === 'decay') {
+                    targetVertices = state.vertices.filter((v, i) => state.decayVertices[i]);
+                }
+                const centroid = getCentroid(targetVertices);
                 const wCos = Math.cos(state.rotation);
                 const wSin = Math.sin(state.rotation);
                 const targetX = state.centerPos.x + (centroid.x * wCos - centroid.y * wSin);
@@ -714,11 +830,13 @@ function getTowerConfig(floor) {
     return config;
 }
 function getTowerColor(floor) { const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']; return colors[(floor - 1) % colors.length]; }
-function createPolygon(size, complexity) {
+function createPolygon(size, complexity, forceMinPoints = 0) {
     let minR = 70, maxR = 180;
     if (size === 'small') { minR = 30; maxR = 90; } else if (size === 'large') { minR = 120; maxR = 220; }
     let minP = 5, maxP = 9, v = 0.25;
-    if (complexity === 'simple') { minP = 3; maxP = 5; v = 0.1; } else if (complexity === 'chaos') { minP = 8; maxP = 14; v = 0.5; }
+    if (complexity === 'simple') { minP = 3; maxP = 5; v = 0.1; } else if (complexity === 'chaos') { minP = 8; maxP = 14; v = 0.5; } else if (complexity === 'high') { minP = 6; maxP = 10; v = 0.35; }
+    // Force minimum points if specified (for decay mode)
+    if (forceMinPoints > 0) { minP = Math.max(minP, forceMinPoints); maxP = Math.max(maxP, forceMinPoints); }
     const points = Math.floor(Math.random() * (maxP - minP + 1)) + minP;
     const vs = []; const step = (Math.PI * 2) / points;
     for (let i = 0; i < points; i++) {

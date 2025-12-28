@@ -927,10 +927,10 @@ body {
 }
 
 .tab-btn.active {
-    background: #3b82f6;
-    border-color: #3b82f6;
+    background: var(--mode-color, #3b82f6);
+    border-color: var(--mode-color, #3b82f6);
     color: white;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 4px 15px var(--mode-glow, rgba(59, 130, 246, 0.4));
 }
 
 /* =========================================

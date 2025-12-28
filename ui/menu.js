@@ -11,7 +11,7 @@ const MODES = [
     { id: 'shrink', name: 'Shrink', icon: '🔬', desc: '<ul><li>🔬 <strong>Ab Level 18</strong></li><li>📉 Die Form schrumpft kontinuierlich.</li></ul>' },
     { id: 'glitch', name: 'Glitch', icon: '👾', desc: '<ul><li>👾 <strong>Ab Level 20</strong></li><li>📺 Die Simulation ist kaputt.</li></ul>' },
     { id: 'mirage', name: 'Mirage', icon: '🧞', desc: '<ul><li>🧞 <strong>Ab Level 22</strong></li><li>😵 Geisterbilder verwirren dich.</li></ul>' },
-    { id: 'decay', name: 'Decay', icon: '☠️', desc: '<ul><li>☠️ <strong>Ab Level 25</strong></li><li>💀 Die Form zerfällt mit der Zeit.</li></ul>' },
+    { id: 'decay', name: 'Decay', icon: '☢️', desc: '<ul><li>☢️ <strong>Ab Level 25</strong></li><li>💀 Die Form zerfällt mit der Zeit.</li></ul>' },
     { id: 'custom', name: 'Custom', icon: '🛠️', desc: '<ul><li>🛠️ Sandbox Modus.</li><li>🧪 Keine XP.</li></ul>' }
 ];
 
@@ -296,7 +296,7 @@ export function updateTowerUI(floor, maxFloor, config, themeColor, onStart, user
                     ${config.movement !== 'off' ? `<li style="color:${themeColor}">🏃 Hunter aktiv</li>` : '<li class="inactive">🏃 Hunter inaktiv</li>'}
                     ${config.style === 'spotlight' ? `<li style="color:#94a3b8">🔦 Dunkelheit</li>` : ''}
                     ${config.special === 'shrink' ? `<li style="color:#ec4899">🧲 Shrink</li>` : ''}
-                    ${config.special === 'decay' ? `<li style="color:#84cc16">🪞 Decay</li>` : ''}
+                    ${config.special === 'decay' ? `<li style="color:#84cc16">☢️ Decay</li>` : ''}
                     ${config.timer !== 'off' ? `<li style="color:#ef4444">⏱️ Zeitlimit</li>` : ''}
                     ${config.special === 'glitch' ? `<li style="color:#a855f7">👾 Glitch</li>` : ''}
                     ${config.special === 'mirage' ? `<li style="color:#14b8a6">🧞 Mirage</li>` : ''}

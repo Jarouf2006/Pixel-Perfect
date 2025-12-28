@@ -48,58 +48,73 @@ export function updateCoinDisplayColor(mode, towerColor = null) {
     const avatarCircle = document.getElementById('avatarCircle');
     if (!coinDisplay) return;
     
-    // Mode-specific colors - using FIRST gradient color as primary (matches h1)
+    // Mode-specific colors
+    // solid = first gradient color (for buttons, grid)
+    // secondary = second gradient color (for level, coins)
     const modeColors = {
-        'normal': { border: 'rgba(96, 165, 250, 0.4)', glow: 'rgba(96, 165, 250, 0.2)', text: '#93c5fd', solid: '#60a5fa', dark: '#3b82f6' },
-        'turnier': { border: 'rgba(239, 68, 68, 0.4)', glow: 'rgba(239, 68, 68, 0.2)', text: '#fca5a5', solid: '#ef4444', dark: '#dc2626' },
-        'blitz': { border: 'rgba(245, 158, 11, 0.4)', glow: 'rgba(245, 158, 11, 0.2)', text: '#fcd34d', solid: '#f59e0b', dark: '#d97706' },
-        'hunter': { border: 'rgba(6, 182, 212, 0.4)', glow: 'rgba(6, 182, 212, 0.2)', text: '#67e8f9', solid: '#06b6d4', dark: '#0891b2' },
-        'pulsar': { border: 'rgba(217, 70, 239, 0.4)', glow: 'rgba(217, 70, 239, 0.2)', text: '#f0abfc', solid: '#d946ef', dark: '#c026d3' },
-        'blueprint': { border: 'rgba(59, 130, 246, 0.4)', glow: 'rgba(59, 130, 246, 0.2)', text: '#93c5fd', solid: '#3b82f6', dark: '#2563eb' },
-        'spotlight': { border: 'rgba(100, 116, 139, 0.4)', glow: 'rgba(100, 116, 139, 0.2)', text: '#cbd5e1', solid: '#64748b', dark: '#475569' },
-        'shrink': { border: 'rgba(236, 72, 153, 0.4)', glow: 'rgba(236, 72, 153, 0.2)', text: '#f9a8d4', solid: '#ec4899', dark: '#db2777' },
-        'glitch': { border: 'rgba(168, 85, 247, 0.4)', glow: 'rgba(168, 85, 247, 0.2)', text: '#d8b4fe', solid: '#a855f7', dark: '#9333ea' },
-        'mirage': { border: 'rgba(20, 184, 166, 0.4)', glow: 'rgba(20, 184, 166, 0.2)', text: '#5eead4', solid: '#14b8a6', dark: '#0d9488' },
-        'decay': { border: 'rgba(132, 204, 22, 0.4)', glow: 'rgba(132, 204, 22, 0.2)', text: '#bef264', solid: '#84cc16', dark: '#65a30d' },
-        'custom': { border: 'rgba(139, 92, 246, 0.4)', glow: 'rgba(139, 92, 246, 0.2)', text: '#c4b5fd', solid: '#8b5cf6', dark: '#7c3aed' }
+        'normal': { solid: '#60a5fa', dark: '#3b82f6', secondary: '#34d399' },
+        'turnier': { solid: '#ef4444', dark: '#dc2626', secondary: '#f59e0b' },
+        'blitz': { solid: '#f59e0b', dark: '#d97706', secondary: '#fbbf24' },
+        'hunter': { solid: '#06b6d4', dark: '#0891b2', secondary: '#22d3ee' },
+        'pulsar': { solid: '#d946ef', dark: '#c026d3', secondary: '#e879f9' },
+        'blueprint': { solid: '#3b82f6', dark: '#2563eb', secondary: '#60a5fa' },
+        'spotlight': { solid: '#64748b', dark: '#475569', secondary: '#94a3b8' },
+        'shrink': { solid: '#ec4899', dark: '#db2777', secondary: '#f472b6' },
+        'glitch': { solid: '#a855f7', dark: '#9333ea', secondary: '#c084fc' },
+        'mirage': { solid: '#14b8a6', dark: '#0d9488', secondary: '#2dd4bf' },
+        'decay': { solid: '#84cc16', dark: '#65a30d', secondary: '#a3e635' },
+        'custom': { solid: '#8b5cf6', dark: '#7c3aed', secondary: '#a78bfa' }
     };
     
     let colors;
     if (mode === 'tower' && towerColor) {
-        // Use tower color
+        // Use tower color (lighten for secondary)
         colors = { 
-            border: towerColor + '66', 
-            glow: towerColor + '33', 
-            text: towerColor,
             solid: towerColor,
-            dark: darkenColor(towerColor, 20)
+            dark: darkenColor(towerColor, 20),
+            secondary: lightenColor(towerColor, 20)
         };
     } else {
         colors = modeColors[mode] || modeColors['normal'];
     }
     
-    coinDisplay.style.setProperty('--coin-color', colors.border);
-    coinDisplay.style.setProperty('--coin-glow', colors.glow);
-    coinDisplay.style.setProperty('--coin-text', colors.text);
+    // Secondary color for coins and level (second gradient color)
+    const secondaryRgba = hexToRgba(colors.secondary, 0.4);
+    const secondaryGlow = hexToRgba(colors.secondary, 0.2);
     
-    // Update avatar circle colors too
+    coinDisplay.style.setProperty('--coin-color', secondaryRgba);
+    coinDisplay.style.setProperty('--coin-glow', secondaryGlow);
+    coinDisplay.style.setProperty('--coin-text', colors.secondary);
+    
+    // Update avatar circle colors (also secondary)
     if (avatarCircle) {
-        avatarCircle.style.setProperty('--coin-color', colors.border);
-        avatarCircle.style.setProperty('--coin-text', colors.text);
+        avatarCircle.style.setProperty('--coin-color', secondaryRgba);
+        avatarCircle.style.setProperty('--coin-text', colors.secondary);
     }
     
-    // Update level circle colors via CSS variable on wrapper
+    // Update level circle colors (secondary)
     const levelWrapper = document.querySelector('.arc-circle-wrapper');
     if (levelWrapper) {
-        levelWrapper.style.setProperty('--level-color', colors.solid);
+        levelWrapper.style.setProperty('--level-color', colors.secondary);
     }
     
-    // Set global mode color CSS variables on body for buttons, cards, etc.
+    // Set global mode color CSS variables on body for buttons, cards, etc. (primary/solid)
+    const primaryRgba = hexToRgba(colors.solid, 0.4);
+    const primaryGlow = hexToRgba(colors.solid, 0.2);
+    
     document.body.style.setProperty('--mode-color', colors.solid);
     document.body.style.setProperty('--mode-color-dark', colors.dark);
-    document.body.style.setProperty('--mode-glow', colors.glow);
-    document.body.style.setProperty('--mode-glow-strong', colors.border);
-    document.body.style.setProperty('--mode-bg', colors.glow);
+    document.body.style.setProperty('--mode-glow', primaryGlow);
+    document.body.style.setProperty('--mode-glow-strong', primaryRgba);
+    document.body.style.setProperty('--mode-bg', primaryGlow);
+}
+
+// Helper: Hex to RGBA
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // Helper: Darken a hex color
@@ -109,6 +124,16 @@ function darkenColor(hex, percent) {
     const R = Math.max(0, (num >> 16) - amt);
     const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
     const B = Math.max(0, (num & 0x0000FF) - amt);
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+}
+
+// Helper: Lighten a hex color
+function lightenColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, (num >> 16) + amt);
+    const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+    const B = Math.min(255, (num & 0x0000FF) + amt);
     return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 }
 
